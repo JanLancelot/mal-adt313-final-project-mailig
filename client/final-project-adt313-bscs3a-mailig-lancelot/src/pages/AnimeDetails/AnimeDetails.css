@@ -1,0 +1,221 @@
+.anime-details-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    position: relative;
+  }
+  
+  .back-button {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(231, 76, 60, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .back-button:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+  }
+  
+  .back-button:active {
+    transform: translateY(0);
+  }
+  
+  .anime-details-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+  }
+  
+  .anime-details-content {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+  }
+  
+  .left-section {
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+  }
+  
+  .poster-image {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+  }
+  
+  .poster-image:hover {
+    transform: scale(1.02);
+  }
+  
+  .title-and-score {
+    margin: 1.5rem 0;
+  }
+  
+  .title-and-score h1 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+  }
+  
+  .score {
+    font-size: 1.2rem;
+    color: #666;
+  }
+  
+  .highlight {
+    color: #e74c3c;
+    font-weight: 600;
+  }
+  
+  .right-section {
+    padding: 1rem 0;
+  }
+  
+  .right-section h2 {
+    color: #2c3e50;
+    font-size: 1.5rem;
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e74c3c;
+  }
+  
+  .overview {
+    line-height: 1.6;
+    color: #444;
+    font-size: 1.1rem;
+  }
+  
+  .video-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .video-list iframe {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .cast-list, .crew-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  
+  .cast-member {
+    text-align: center;
+    transition: transform 0.3s ease;
+  }
+  
+  .cast-member:hover {
+    transform: translateY(-5px);
+  }
+  
+  .cast-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .cast-member p, .crew-member p {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.5rem;
+  }
+  
+  .recommendations-list, .similar-shows-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  
+  .recommendation-item, .similar-show-item {
+    text-align: center;
+    transition: transform 0.3s ease;
+  }
+  
+  .recommendation-item:hover, .similar-show-item:hover {
+    transform: translateY(-5px);
+  }
+  
+  .recommendation-image, .similar-show-image {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    margin-bottom: 0.5rem;
+  }
+  
+  .loading, .error {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.2rem;
+    color: #666;
+  }
+  
+  .error {
+    color: #e74c3c;
+  }
+  
+  @media (max-width: 900px) {
+    .anime-details-content {
+      grid-template-columns: 1fr;
+    }
+    
+    .left-section {
+      position: static;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+  }
+  
+  @media (max-width: 600px) {
+    .anime-details-container {
+      padding: 1rem;
+    }
+  
+    .back-button {
+      top: 1rem;
+      right: 1rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.9rem;
+    }
+    
+    .video-list {
+      grid-template-columns: 1fr;
+    }
+    
+    .cast-list, .crew-list,
+    .recommendations-list, .similar-shows-list {
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+  }
