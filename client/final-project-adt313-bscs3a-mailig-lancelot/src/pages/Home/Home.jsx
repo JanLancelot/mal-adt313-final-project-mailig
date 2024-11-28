@@ -354,9 +354,10 @@ const Home = () => {
 
   useEffect(() => {
     if (user) {
+        console.log("Test!");
       fetchAnime();
-    }
-  }, [user, location.pathname, fetchAnime]);
+    }    
+  }, [user, location.pathname]);
 
   useEffect(() => {
     if (!user ) {
