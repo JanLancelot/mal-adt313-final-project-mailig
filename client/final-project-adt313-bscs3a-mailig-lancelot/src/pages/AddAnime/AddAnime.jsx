@@ -18,11 +18,13 @@ const AnimeForm = ({ anime = {}, onSubmit, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    const formattedScore = parseFloat(parseFloat(score).toFixed(3)) || 0;
     onSubmit({
       id: anime.id || null,
       tmdb_id: anime.tmdb_id || null,
       title,
-      score: parseFloat(score) || 0,
+      score: formattedScore,
       synopsis,
       coverPhoto,
       popularity: parseFloat(popularity) || 0,
@@ -59,7 +61,7 @@ const AnimeForm = ({ anime = {}, onSubmit, onCancel }) => {
         <input
           id="score"
           type="number"
-          step="0.1"
+          step="0.001"
           min="0"
           max="10"
           value={score}

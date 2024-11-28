@@ -31,7 +31,10 @@ export default function Authentication() {
             setMessage(response.data.message);
 
             if (isLogin && response.data.message === "Login successful") {
-                login({ username });
+                login({
+                    username: response.data.user.username,
+                    role: response.data.user.role
+                });
                 navigate('/home');
             }
             if (!isLogin && response.data.message === "User registered successfully") {

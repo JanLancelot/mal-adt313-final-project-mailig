@@ -19,12 +19,13 @@ export const AuthProvider = ({ children }) => {
 
     const login = (userData) => {
         setUser(userData);
-        console.log(userData);
-        
+        localStorage.setItem('user', JSON.stringify(userData));
+        console.log('User data stored:', userData);
     };
 
     const logout = () => {
         setUser(null);
+        localStorage.removeItem('user');
     };
 
     const contextValue = {
