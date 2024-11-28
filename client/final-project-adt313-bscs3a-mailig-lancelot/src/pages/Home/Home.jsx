@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import PropTypes from "prop-types";
 import { useAnime } from "../../AnimeContext";
@@ -6,14 +6,26 @@ import "./Home.css";
 import { useAuth } from "../../AuthContext";
 import HeroSlider from "../HeroSlider/HeroSlider";
 
-const AnimeCard = ({ anime, onUpdate, onDelete, isAdmin }) => {
+const AnimeCard = React.memo(({ anime, onUpdate, onDelete, isAdmin }) => {
     const navigate = useNavigate();
 
-    const handleViewDetails = () => {
+    const handleViewDetails = useCallback(() => {
         navigate(`/anime/${anime.id}`);
-    };
+    }, [navigate, anime.id]);
 
-    const genresArray = anime.genres ? JSON.parse(anime.genres) : [];
+    const genresArray = useMemo(() => {
+      return anime.genres ? JSON.parse(anime.genres) : [];
+    }, [anime.genres]);
+      
+    const formattedReleaseDate =  useMemo(() => {
+      return anime.releaseDate
+      ? new Date(anime.releaseDate).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
+      : 'N/A';
+      }, [anime.releaseDate]);    
 
     return (
         <div className="anime-card">
@@ -23,6 +35,7 @@ const AnimeCard = ({ anime, onUpdate, onDelete, isAdmin }) => {
                         src={anime.coverPhoto}
                         alt={`${anime.title} Cover`}
                         className="anime-card__image"
+                        loading="lazy"
                     />
                 ) : (
                     <div className="anime-card__no-image">No Image Available</div>
@@ -40,15 +53,7 @@ const AnimeCard = ({ anime, onUpdate, onDelete, isAdmin }) => {
                     </div>
                     <div className="anime-card__meta-item">
                         <span className="anime-card__meta-label">Released:</span>
-                        <span className="anime-card__meta-value">
-                            {anime.releaseDate
-                                ? new Date(anime.releaseDate).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric'
-                                })
-                                : 'N/A'}
-                        </span>
+                        <span className="anime-card__meta-value">{formattedReleaseDate}</span>
                     </div>
                 </div>
                 <div className="anime-card__genres">
@@ -95,7 +100,9 @@ const AnimeCard = ({ anime, onUpdate, onDelete, isAdmin }) => {
             </div>
         </div>
     );
-};
+});
+
+AnimeCard.displayName = 'AnimeCard';
 
 AnimeCard.propTypes = {
     anime: PropTypes.shape({
@@ -114,35 +121,28 @@ AnimeCard.propTypes = {
 };
 
 const AnimeForm = ({ anime, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
-    id: anime ? anime.id : null,
-    tmdb_id: anime ? anime.tmdb_id : "",
-    title: anime ? anime.title : "",
-    score: anime ? anime.score : "",
-    synopsis: anime ? anime.synopsis : "",
-    coverPhoto: anime ? anime.coverPhoto : "",
-    popularity: anime ? anime.popularity : "",
-    releaseDate: anime ? anime.releaseDate : "",
-    genres: (() => {
-      try {
-        return anime && anime.genres ? JSON.parse(anime.genres) : [];
-      } catch (error) {
-        console.error("Error parsing genres:", error);
-        return [];
-      }
-    })(),
-  });
+  const [formData, setFormData] = useState(() => ({
+      id: anime ? anime.id : null,
+      tmdb_id: anime ? anime.tmdb_id : "",
+      title: anime ? anime.title : "",
+      score: anime ? anime.score : "",
+      synopsis: anime ? anime.synopsis : "",
+      coverPhoto: anime ? anime.coverPhoto : "",
+      popularity: anime ? anime.popularity : "",
+      releaseDate: anime ? anime.releaseDate : "",
+      genres: anime && anime.genres ? JSON.parse(anime.genres) : [],
+  }));
   const [newGenre, setNewGenre] = useState("");
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-  };
+  }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
 
     const url = "http://localhost/mal-project/anime_operations.php";
@@ -173,9 +173,9 @@ const AnimeForm = ({ anime, onSubmit, onCancel }) => {
       console.error("Error:", error);
       alert("An error occurred while saving the anime");
     }
-  };
+  }, [formData, onSubmit, anime]);
 
-  const addGenre = () => {
+  const addGenre = useCallback(() => {
     if (newGenre && !formData.genres.includes(newGenre)) {
       setFormData((prev) => ({
         ...prev,
@@ -183,14 +183,14 @@ const AnimeForm = ({ anime, onSubmit, onCancel }) => {
       }));
       setNewGenre("");
     }
-  };
+  }, [newGenre, formData.genres]);
 
-  const removeGenre = (genreToRemove) => {
+  const removeGenre = useCallback((genreToRemove) => {
     setFormData((prev) => ({
       ...prev,
       genres: prev.genres.filter((genre) => genre !== genreToRemove),
     }));
-  };
+  }, []);
 
   return (
     <form onSubmit={handleSubmit} className="anime-form">
@@ -245,6 +245,7 @@ const AnimeForm = ({ anime, onSubmit, onCancel }) => {
               src={formData.coverPhoto}
               alt="Cover Preview"
               style={{ maxWidth: "200px", marginTop: "10px" }}
+              loading="lazy"
             />
           </div>
         )}
@@ -337,7 +338,7 @@ const Home = () => {
   const [filterGenre, setFilterGenre] = useState("");
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isAdmin = user && user.role === "admin";
+  const isAdmin = useMemo(() => user && user.role === "admin", [user]);
   const location = useLocation();
   const {
     animeList,
@@ -351,32 +352,29 @@ const Home = () => {
     fetchAnime,
   } = useAnime();
 
-  console.log(user.role);
-
   useEffect(() => {
     if (user) {
       fetchAnime();
     }
   }, [user, location.pathname, fetchAnime]);
 
-  if (!user) {
-    navigate("/");
-    return null;
-  }
+  useEffect(() => {
+    if (!user ) {
+      navigate("/");
+    }
+  }, [user, navigate]);
+  
 
-  if (loading) return <div className="loading">Loading...</div>;
-  if (error) return <div className="error">{error}</div>;
-
-  const handleUpdate = async (updatedAnime) => {
+  const handleUpdate = useCallback(async (updatedAnime) => {
     try {
       await updateAnime(updatedAnime);
       setEditingAnime(null);
     } catch (err) {
       console.error("Failed to update anime", err);
     }
-  };
+  }, [updateAnime]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     if (window.confirm("Are you sure you want to delete this anime?")) {
       try {
         await deleteAnime(id);
@@ -384,74 +382,75 @@ const Home = () => {
         console.error("Failed to delete anime", err);
       }
     }
-  };
+  }, [deleteAnime]);
 
-  const handleSearchChange = (event) => {
+  const handleSearchChange = useCallback((event) => {
     setSearchQuery(event.target.value);
-  };
+  }, []);
 
-  const handleFilterScoreChange = (event) => {
+  const handleFilterScoreChange = useCallback((event) => {
     setFilterScore(event.target.value);
-  };
+  }, []);
 
-  const handleSortChange = (event) => {
+  const handleSortChange = useCallback((event) => {
     setSortBy(event.target.value);
-  };
+  }, []);
 
-  const handleFilterGenreChange = (event) => {
+  const handleFilterGenreChange = useCallback((event) => {
     setFilterGenre(event.target.value);
-  };
+  }, []);
 
-  const sortAnimeList = (list) => {
+  const sortedAnimeList = useMemo(() => {
+    let filteredAndSearchedAnimeList = animeList.filter((anime) => {
+      const titleMatches = anime.title
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const scoreMatches =
+        filterScore === "" || parseFloat(anime.score) >= parseFloat(filterScore);
+
+      let genreMatches = true;
+      if (filterGenre) {
+        try {
+          const animeGenres = anime.genres ? JSON.parse(anime.genres) : [];
+          genreMatches = animeGenres.includes(filterGenre);
+        } catch (e) {
+          console.error("Failed to parse genres for anime", anime, e);
+          genreMatches = false;
+        }
+      }
+
+      return titleMatches && scoreMatches && genreMatches;
+    });
     if (sortBy === "popularity") {
-      return [...list].sort(
+      return [...filteredAndSearchedAnimeList].sort(
         (a, b) => (b.popularity || 0) - (a.popularity || 0)
       );
     } else if (sortBy === "score") {
-      return [...list].sort((a, b) => b.score - a.score);
+      return [...filteredAndSearchedAnimeList].sort((a, b) => b.score - a.score);
     }
-    return list;
-  };
+    return filteredAndSearchedAnimeList;
+  }, [animeList, searchQuery, filterScore, sortBy, filterGenre]);
 
-  const filteredAndSearchedAnimeList = animeList.filter((anime) => {
-    const titleMatches = anime.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const scoreMatches =
-      filterScore === "" || parseFloat(anime.score) >= parseFloat(filterScore);
-
-    let genreMatches = true;
-    if (filterGenre) {
-      try {
-        const animeGenres = anime.genres ? JSON.parse(anime.genres) : [];
-        genreMatches = animeGenres.includes(filterGenre);
-      } catch (e) {
-        console.error("Failed to parse genres for anime", anime, e);
-        genreMatches = false;
-      }
-    }
-
-    return titleMatches && scoreMatches && genreMatches;
-  });
-
-  const sortedAnimeList = sortAnimeList(filteredAndSearchedAnimeList);
-
-  const handleAddNewAnime = async (newAnime) => {
+  const handleAddNewAnime = useCallback(async (newAnime) => {
     try {
       await addAnime(newAnime);
-      navigate("/home");
+      setEditingAnime(null); 
     } catch (err) {
       console.error("Failed to add new anime", err);
     }
-  };
+  }, [addAnime]);
 
-  const handleCancelAdd = () => {
+  const handleCancelAdd = useCallback(() => {
     setEditingAnime(null);
-  };
+  }, []);
 
-  function navToAddAnime() {
+  const navToAddAnime = useCallback(() => {
     navigate("/add-anime");
-  }
+  }, [navigate]);
+
+  if (loading) return <div className="loading">Loading...</div>;
+  if (error) return <div className="error">{error}</div>;
+  if (!user) return null;
 
   return (
     <div className="container">
@@ -461,7 +460,7 @@ const Home = () => {
           <h2>Anime List</h2>
           {isAdmin && (
             <button
-              onClick={() => navToAddAnime()}
+              onClick={navToAddAnime}
               className="add-anime-button"
             >
               Add Anime
@@ -528,17 +527,17 @@ const Home = () => {
         <div className="anime-grid">
           {sortedAnimeList.map((anime) => (
             <AnimeCard
-              key={anime.id}
-              anime={anime}
-              onUpdate={() => setEditingAnime(anime)}
-              onDelete={handleDelete}
-              isAdmin={isAdmin}
-            />
-          ))}
-        </div>
+            key={anime.id}
+            anime={anime}
+            onUpdate={() => setEditingAnime(anime)}
+            onDelete={handleDelete}
+            isAdmin={isAdmin}
+          />
+        ))}
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default Home;
