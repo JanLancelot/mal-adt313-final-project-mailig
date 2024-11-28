@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Authentication.css';
+import { useAuth } from '../../AuthContext';
 
 export default function Authentication() {
     const [isLogin, setIsLogin] = useState(true);
@@ -15,6 +16,7 @@ export default function Authentication() {
     const [message, setMessage] = useState('');
 
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -29,7 +31,7 @@ export default function Authentication() {
             setMessage(response.data.message);
 
             if (isLogin && response.data.message === "Login successful") {
-                localStorage.setItem('user', JSON.stringify({ username }));
+                login({ username });
                 navigate('/home');
             }
             if (!isLogin && response.data.message === "User registered successfully") {

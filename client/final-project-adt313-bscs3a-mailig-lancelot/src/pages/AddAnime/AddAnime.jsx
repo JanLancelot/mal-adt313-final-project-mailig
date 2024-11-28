@@ -113,10 +113,14 @@ const AnimeForm = ({ anime = {}, onSubmit, onCancel }) => {
         />
       </div>
       <div className="flex">
-        <button type="submit" className="bg-blue">
+        <button type="submit" className="bg-blue add-anime-shared-button">
           {anime.id ? "Update" : "Add"} Anime
         </button>
-        <button type="button" onClick={onCancel} className="bg-gray">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="bg-gray add-anime-shared-button"
+        >
           Cancel
         </button>
       </div>
@@ -151,9 +155,11 @@ const AddAnime = ({ onAddAnime }) => {
     photos: [],
     videos: [],
   });
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
 
-  const handleSearch = async () => {
+  const handleSearch = async (pageNumber = 1) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -161,11 +167,17 @@ const AddAnime = ({ onAddAnime }) => {
         params: {
           api_key: TMDB_API_KEY,
           query: searchQuery,
+          page: pageNumber,
         },
       });
       setSearchResults(response.data.results);
+      setTotalPages(response.data.total_pages);
+      setPage(pageNumber);
     } catch (err) {
       setError(err.message || "Failed to search anime");
+      setSearchResults([]);
+      setTotalPages(1);
+      setPage(1);
     } finally {
       setIsLoading(false);
     }
@@ -210,7 +222,7 @@ const AddAnime = ({ onAddAnime }) => {
       title: tmdbAnime.name,
       score: tmdbAnime.vote_average,
       synopsis: tmdbAnime.overview,
-      coverPhoto: `https://image.tmdb.org/t/p/w500${tmdbAnime.poster_path}`,
+      coverPhoto: `https://image.tmdb.org/t/p/original${tmdbAnime.poster_path}`,
       popularity: tmdbAnime.popularity,
       releaseDate: tmdbAnime.first_air_date,
     };
@@ -221,6 +233,12 @@ const AddAnime = ({ onAddAnime }) => {
   const handleFormSubmit = (animeData) => {
     onAddAnime(animeData);
     navigate("/home");
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      handleSearch(newPage);
+    }
   };
 
   if (isLoading) return <div>Loading...</div>;
@@ -236,7 +254,7 @@ const AddAnime = ({ onAddAnime }) => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <button onClick={handleSearch} className="bg-blue">
+        <button onClick={() => handleSearch(1)} className="bg-blue">
           Search
         </button>
       </div>
@@ -244,23 +262,61 @@ const AddAnime = ({ onAddAnime }) => {
       {searchResults.length > 0 && (
         <div className="search-results">
           <h2>Search Results</h2>
-          <ul>
+          <div className="search-results-grid">
             {searchResults.map((result) => (
-              <li key={result.id}>
-                {result.name} (
-                {result.first_air_date
-                  ? result.first_air_date.substring(0, 4)
-                  : "N/A"}
-                )
-                <button
-                  onClick={() => handleSelectAnime(result)}
-                  className="bg-green"
-                >
-                  Select
-                </button>
-              </li>
+              <div key={result.id} className="search-result-card">
+                <div className="search-result-image">
+                  <img
+                    src={
+                      result.poster_path
+                        ? `https://image.tmdb.org/t/p/original${result.poster_path}`
+                        : "https://via.placeholder.com/200x300?text=No+Poster"
+                    }
+                    alt={result.name}
+                  />
+                </div>
+                <div className="search-result-details">
+                  <div className="search-result-content">
+                    <h3>{result.name}</h3>
+                    <p className="date">
+                      {result.first_air_date ? result.first_air_date : "N/A"}
+                    </p>
+                    <p className="rating">Rating: {result.vote_average}</p>
+                    <p className="overview">
+                      {result.overview
+                        ? `${result.overview.substring(0, 100)}...`
+                        : "No overview available."}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleSelectAnime(result)}
+                    className="bg-green add-anime-shared-button"
+                  >
+                    Select
+                  </button>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
+          <div className="pagination">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page <= 1}
+              className="bg-blue"
+            >
+              Previous
+            </button>
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page >= totalPages}
+              className="bg-blue"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 
@@ -306,7 +362,7 @@ const AddAnime = ({ onAddAnime }) => {
             {extraDetails.photos.map((photo, index) => (
               <img
                 key={index}
-                src={`https://image.tmdb.org/t/p/w500${photo.file_path}`}
+                src={`https://image.tmdb.org/t/p/original${photo.file_path}`}
                 alt={`Photo ${index + 1}`}
                 style={{
                   width: "100%",
@@ -346,7 +402,7 @@ const AddAnime = ({ onAddAnime }) => {
               >
                 {castMember.profile_path && (
                   <img
-                    src={`https://image.tmdb.org/t/p/w185${castMember.profile_path}`}
+                    src={`https://image.tmdb.org/t/p/original${castMember.profile_path}`}
                     alt={castMember.name}
                     style={{
                       width: "100%",

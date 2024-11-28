@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import axios from "axios";
 import "./Home.css";
+import { useAuth } from "../../AuthContext";
+import HeroSlider from "../HeroSlider/HeroSlider";
 
 const AnimeCard = ({ anime, onUpdate, onDelete }) => {
     const navigate = useNavigate();
@@ -261,6 +263,7 @@ const AnimeForm = ({ anime, onSubmit, onCancel }) => {
                 />
             </div>
 
+
             <div className="form-group">
                 <label htmlFor="genres">Genres</label>
                 <div className="genres-input-container">
@@ -324,19 +327,35 @@ const Home = () => {
     const [sortBy, setSortBy] = useState("");
     const [filterGenre, setFilterGenre] = useState("");
     const [availableGenres, setAvailableGenres] = useState([]);
+    const [topAnime, setTopAnime] = useState([]);
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     const fetchAnime = async () => {
         try {
             const response = await axios.get('http://localhost/mal-project/anime_operations.php');
-            setAnimeList(response.data);
+            const animeData = response.data;
+            setAnimeList(animeData);
             setLoading(false);
-            extractAllGenres(response.data);
+            extractAllGenres(animeData);
+
+            const sortedAnime = [...animeData].sort((a, b) => b.score - a.score);
+            setTopAnime(sortedAnime.slice(0, 3));
+
         } catch (err) {
             setError('Failed to fetch anime list', err);
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (!user) {
+            navigate('/');
+            return;
+        }
+
+        fetchAnime();
+    }, [navigate, user]);
 
     const extractAllGenres = (animes) => {
         const genres = new Set();
@@ -351,21 +370,6 @@ const Home = () => {
             }
         });
         setAvailableGenres(Array.from(genres));
-    };
-
-    useEffect(() => {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user) {
-            navigate('/');
-            return;
-        }
-
-        fetchAnime();
-    }, [navigate]);
-
-    const handleLogout = () => {
-        localStorage.removeItem('user');
-        navigate('/');
     };
 
     const handleUpdate = async (updatedAnime) => {
@@ -439,75 +443,73 @@ const Home = () => {
 
     return (
         <div className="container">
-            <div className="header">
-                <h1>Anime List</h1>
-                <div className="button-group">
-                    <button onClick={() => navigate("/add-anime")} className="bg-green">
+            <HeroSlider animes={topAnime} />
+            <div className="content">
+                <div className="page-header">
+                    <h2>Anime List</h2>
+                    <button onClick={() => navigate("/add-anime")} className="add-anime-button">
                         Add Anime
                     </button>
-                    <button onClick={handleLogout} className="bg-red">
-                        Logout
-                    </button>
                 </div>
-            </div>
-            <div className="search-filter-container">
-                <input
-                    type="text"
-                    placeholder="Search by title..."
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    className="search-input"
-                />
-                <select
-                    value={filterScore}
-                    onChange={handleFilterScoreChange}
-                    className="filter-select"
-                >
-                    <option value="">Filter by Score (or higher)</option>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
-                        <option key={score} value={score}>{score}+</option>
-                    ))}
 
-                </select>
-                <select value={sortBy} onChange={handleSortChange} className="sort-select">
-                    <option value="">Sort By</option>
-                    <option value="popularity">Popularity</option>
-                    <option value="score">Score</option>
-                </select>
-                <select
-                    value={filterGenre}
-                    onChange={handleFilterGenreChange}
-                    className="filter-select"
-                >
-                    <option value="">Filter by Genre</option>
-                    {availableGenres.map((genre, index) => (
-                        <option key={index} value={genre}>{genre}</option>
-                    ))}
-                </select>
-            </div>
-
-            {editingAnime && (
-                <div className="edit-form-overlay">
-                    <div className="edit-form-container">
-                        <h2>Edit Anime</h2>
-                        <AnimeForm
-                            anime={editingAnime}
-                            onSubmit={handleUpdate}
-                            onCancel={() => setEditingAnime(null)}
-                        />
-                    </div>
-                </div>
-            )}
-
-            <div className="grid">
-                {sortedAnimeList.map((anime) => (
-                    <AnimeCard
-                        key={anime.id}
-                        anime={anime}
-                        onUpdate={setEditingAnime}
-                        onDelete={handleDelete}
+                <div className="search-filter-bar">
+                    <input
+                        type="text"
+                        placeholder="Search by title..."
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        className="search-input"
                     />
-                ))}
+                    <select
+                        value={filterScore}
+                        onChange={handleFilterScoreChange}
+                        className="filter-select"
+                    >
+                        <option value="">Filter by Score</option>
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
+                            <option key={score} value={score}>{score}+</option>
+                        ))}
+                    </select>
+                    <select value={sortBy} onChange={handleSortChange} className="filter-select">
+                        <option value="">Sort By</option>
+                        <option value="popularity">Popularity</option>
+                        <option value="score">Score</option>
+                    </select>
+                    <select
+                        value={filterGenre}
+                        onChange={handleFilterGenreChange}
+                        className="filter-select"
+                    >
+                        <option value="">Filter by Genre</option>
+                        {availableGenres.map((genre, index) => (
+                            <option key={index} value={genre}>{genre}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {editingAnime && (
+                    <div className="edit-form-overlay">
+                        <div className="edit-form-container">
+                            <h2>Edit Anime</h2>
+                            <AnimeForm
+                                anime={editingAnime}
+                                onSubmit={handleUpdate}
+                                onCancel={() => setEditingAnime(null)}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                <div className="anime-grid">
+                    {sortedAnimeList.map((anime) => (
+                        <AnimeCard
+                            key={anime.id}
+                            anime={anime}
+                            onUpdate={setEditingAnime}
+                            onDelete={handleDelete}
+                        />
+                    ))}
+                </div>
             </div>
         </div>
     );
