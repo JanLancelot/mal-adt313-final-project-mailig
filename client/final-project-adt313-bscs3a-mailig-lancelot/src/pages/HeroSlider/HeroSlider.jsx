@@ -16,11 +16,11 @@ const HeroSlider = ({ animes }) => {
         return () => clearInterval(intervalId);
     }, [currentIndex, isAutoPlaying]);
 
-    const handlePrevious = () => {
+    function handlePrevious () {
         setCurrentIndex((prev) => (prev === 0 ? animes.length - 1 : prev - 1));
     };
 
-    const handleNext = () => {
+    function handleNext() {
         setCurrentIndex((prev) => (prev + 1) % animes.length);
     };
 

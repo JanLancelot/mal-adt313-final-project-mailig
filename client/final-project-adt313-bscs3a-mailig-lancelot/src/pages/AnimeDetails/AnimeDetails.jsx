@@ -1,10 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './AnimeDetails.css';
+import { useAnime } from '../../AnimeContext';
+import { useAuth } from '../../AuthContext';
+import { FaStar as SolidStar } from 'react-icons/fa';
+import { FaRegStar as RegularStar } from 'react-icons/fa';
 
 const TMDB_API_KEY = "2c7e4cf1a9c1270547b2397569f7ad40";
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
+const API_BASE_URL = 'http://localhost/mal-project';
 
 export default function AnimeDetails() {
     const { animeId } = useParams();
@@ -12,25 +17,18 @@ export default function AnimeDetails() {
     const [localAnimeDetails, setLocalAnimeDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isFavorite, setIsFavorite] = useState(false);
     const navigate = useNavigate();
+    const { animeList } = useAnime();
+    const { user } = useAuth();
 
     useEffect(() => {
-        const fetchAnimeDetails = async () => {
-            setLoading(true);
-            setError(null);
+        const fetchTMDBDetails = async (tmdbId) => {
+            if (!tmdbId) {
+                setAnimeDetails(null);
+                return;
+            }
             try {
-                const localResponse = await axios.get(`http://localhost/mal-project/anime_operations.php?id=${animeId}`);
-                const localAnimeData = localResponse.data;
-            
-                if (!localAnimeData || localAnimeData.length === 0) {
-                    setError('Anime not found in local database.');
-                    setLoading(false);
-                    return;
-                }
-            
-                setLocalAnimeDetails(localAnimeData[0]);
-                
-                const tmdbId = localAnimeData[0].tmdb_id;
                 const detailsResponse = await axios.get(`${TMDB_API_BASE_URL}/tv/${tmdbId}`, {
                     params: {
                         api_key: TMDB_API_KEY,
@@ -39,18 +37,90 @@ export default function AnimeDetails() {
                 });
                 setAnimeDetails(detailsResponse.data);
             } catch (err) {
-                setError(`Failed to fetch anime details: ${err.message}`);
-            } finally {
-                setLoading(false);
+                setError(`Failed to fetch TMDB anime details: ${err.message}`);
             }
         };
 
-        fetchAnimeDetails();
-    }, [animeId]);
+        if (animeList.length > 0) {
+            setLoading(true);
+            setError(null);
+            const foundAnime = animeList.find(anime => anime.id === parseInt(animeId));
+
+            if (foundAnime) {
+                setLocalAnimeDetails(foundAnime);
+                fetchTMDBDetails(foundAnime.tmdb_id);
+                if (user) {
+                    checkFavoriteStatus(foundAnime.id);
+                }
+            } else {
+                setError('Anime not found in local context.');
+            }
+            setLoading(false);
+        }
+    }, [animeId, animeList, user]);
+
+    async function checkFavoriteStatus (animeId) {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/get_favorites.php?userId=${user.id}`);
+            if (response.data && response.data.favorites) {
+                const favorites = JSON.parse(response.data.favorites) || [];
+                setIsFavorite(favorites.includes(animeId));
+            } else {
+                setIsFavorite(false);
+            }
+        } catch (error) {
+            console.error("Error fetching favorite status:", error);
+            setIsFavorite(false);
+        }
+    };
+
+    const parsedLocalGenres = useMemo(() => {
+        if (!localAnimeDetails || !localAnimeDetails.genres) return [];
+        try {
+            const genres = JSON.parse(localAnimeDetails.genres);
+            return Array.isArray(genres) ? genres : [];
+        } catch (e) {
+            console.error("Failed to parse genres string:", localAnimeDetails.genres, e);
+            return [];
+        }
+    }, [localAnimeDetails]);
+
+    async function handleToggleFavorite () {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
+        try {
+            const response = await axios.post(`${API_BASE_URL}/update_favorites.php`, {
+                userId: user.id,
+                animeId: parseInt(animeId),
+                action: isFavorite ? 'remove' : 'add'
+            });
+
+            if (response.data.success) {
+                setIsFavorite(!isFavorite);
+            } else {
+                setError(response.data.message || 'Failed to update favorites.');
+            }
+        } catch (error) {
+            setError('Failed to update favorites.');
+            console.error("Error updating favorites:", error);
+        }
+    };
 
     if (loading) return <div className="loading">Loading...</div>;
     if (error) return <div className="error">{error}</div>;
-    if (!animeDetails || !localAnimeDetails) return <div className="loading">No anime details found.</div>;
+    if (!localAnimeDetails) return <div className="loading">No anime details found.</div>;
+
+    const {
+        title,
+        score,
+        synopsis,
+        coverPhoto,
+        popularity,
+        releaseDate,
+    } = localAnimeDetails;
 
     const {
         name,
@@ -65,30 +135,7 @@ export default function AnimeDetails() {
         credits,
         recommendations,
         similar,
-    } = animeDetails;
-
-    const {
-        title,
-        score,
-        synopsis,
-        coverPhoto,
-        popularity,
-        releaseDate,
-        genres: localGenres
-    } = localAnimeDetails;
-
-    let parsedLocalGenres = [];
-    if (localGenres) {
-        try {
-            parsedLocalGenres = JSON.parse(localGenres);
-            if (!Array.isArray(parsedLocalGenres)) {
-                parsedLocalGenres = [];
-            }
-        } catch (e) {
-            console.error("Failed to parse genres string:", localGenres, e);
-            parsedLocalGenres = [];
-        }
-    }
+    } = animeDetails || {};
 
     return (
         <div className="anime-details-container">
@@ -111,7 +158,14 @@ export default function AnimeDetails() {
                          />       
                     ) : null}
                     <div className="title-and-score">
-                        <h1>{title || name}</h1>
+                        <h1>
+                            {title || name}{' '}
+                            {user && (
+                                <span onClick={handleToggleFavorite} className="favorite-icon">
+                                    {isFavorite ? <SolidStar color="#ffc107" /> : <RegularStar />}
+                                </span>
+                            )}
+                        </h1>
                         <p className="score">
                             Score: <span className="highlight">{score !== null ? score : vote_average > 0 ? vote_average : 'N/A'}</span>
                         </p>
@@ -156,6 +210,11 @@ export default function AnimeDetails() {
                          Popularity: <span className="highlight">{popularity}</span>
                         </p>
                     )}
+                   {/* {user && (
+                        <button onClick={handleToggleFavorite} className="favorite-button">
+                            {isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                        </button>
+                    )} */}
                 </div>
                 <div className="right-section">
                     {synopsis || overview ? (
@@ -172,7 +231,7 @@ export default function AnimeDetails() {
                                 {videos.results.slice(0, 3).map((video) => (
                                     <iframe
                                         key={video.key}
-                                        width="300"
+                                        width                                        ="300"
                                         height="200"
                                         src={`https://www.youtube.com/embed/${video.key}`}
                                         title="YouTube video player"
@@ -228,41 +287,41 @@ export default function AnimeDetails() {
                             <div className="recommendations-list">
                                 {recommendations.results.slice(0, 5).map((recommendation) => (
                                     <div key={recommendation.id} className="recommendation-item">
-                                        {recommendation.poster_path && (
-                                            <img
-                                                src={`https://image.tmdb.org/t/p/w200${recommendation.poster_path}`}
-                                                alt={recommendation.name}
-                                                className="recommendation-image"
-                                            />
-                                        )}
-                                        <p>{recommendation.name}</p>
-                                    </div>
-                                ))}
-                            </div>
+                                    {recommendation.poster_path && (
+                                        <img
+                                            src={`https://image.tmdb.org/t/p/w200${recommendation.poster_path}`}
+                                            alt={recommendation.name}
+                                            className="recommendation-image"
+                                        />
+                                    )}
+                                    <p>{recommendation.name}</p>
+                                </div>
+                            ))}
                         </div>
-                    )}
+                    </div>
+                )}
 
-                    {similar && similar.results.length > 0 && (
-                        <div className="similar-shows">
-                            <h2>Similar Shows</h2>
-                            <div className="similar-shows-list">
-                                {similar.results.slice(0, 5).map((show) => (
-                                    <div key={show.id} className="similar-show-item">
-                                        {show.poster_path && (
-                                            <img
-                                                src={`https://image.tmdb.org/t/p/w200${show.poster_path}`}
-                                                alt={show.name}
-                                                className="similar-show-image"
-                                            />
-                                        )}
-                                        <p>{show.name}</p>
-                                    </div>
-                                ))}
-                            </div>
+                {similar && similar.results.length > 0 && (
+                    <div className="similar-shows">
+                        <h2>Similar Shows</h2>
+                        <div className="similar-shows-list">
+                            {similar.results.slice(0, 5).map((show) => (
+                                <div key={show.id} className="similar-show-item">
+                                    {show.poster_path && (
+                                        <img
+                                            src={`https://image.tmdb.org/t/p/w200${show.poster_path}`}
+                                            alt={show.name}
+                                            className="similar-show-image"
+                                        />
+                                    )}
+                                    <p>{show.name}</p>
+                                </div>
+                            ))}
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
         </div>
-    );
+    </div>
+);
 };

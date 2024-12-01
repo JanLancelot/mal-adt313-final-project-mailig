@@ -8,7 +8,7 @@ const TMDB_API_KEY = "2c7e4cf1a9c1270547b2397569f7ad40";
 const TMDB_SEARCH_URL = "https://api.themoviedb.org/3/search/tv";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
-const AnimeForm = ({ anime = {}, onSubmit, onCancel }) => {
+function AnimeForm({ anime = {}, onSubmit, onCancel }) {
   const [title, setTitle] = useState(anime.title || "");
   const [score, setScore] = useState(anime.score || "");
   const [synopsis, setSynopsis] = useState(anime.synopsis || "");
@@ -16,7 +16,7 @@ const AnimeForm = ({ anime = {}, onSubmit, onCancel }) => {
   const [popularity, setPopularity] = useState(anime.popularity || "");
   const [releaseDate, setReleaseDate] = useState(anime.releaseDate || "");
 
-  const handleSubmit = (e) => {
+  function handleSubmit (e) {
     e.preventDefault();
 
     const formattedScore = parseFloat(parseFloat(score).toFixed(3)) || 0;
@@ -146,7 +146,8 @@ AnimeForm.propTypes = {
   onCancel: PropTypes.func.isRequired,
 };
 
-const AddAnime = ({ onAddAnime }) => {
+export default function AddAnime({ onAddAnime }) {
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -161,7 +162,7 @@ const AddAnime = ({ onAddAnime }) => {
   const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
 
-  const handleSearch = async (pageNumber = 1) => {
+  async function handleSearch(pageNumber = 1) {
     setIsLoading(true);
     setError(null);
     try {
@@ -185,7 +186,7 @@ const AddAnime = ({ onAddAnime }) => {
     }
   };
 
-  const fetchAdditionalDetails = async (animeId) => {
+  async function fetchAdditionalDetails (animeId) {
     try {
       const [creditsResponse, imagesResponse, videosResponse, detailsResponse] =
         await Promise.all([
@@ -217,7 +218,7 @@ const AddAnime = ({ onAddAnime }) => {
     }
   };
 
-  const handleSelectAnime = async (tmdbAnime) => {
+  async function handleSelectAnime (tmdbAnime) {
     const animeData = {
       id: tmdbAnime.id,
       tmdb_id: tmdbAnime.id,
@@ -232,12 +233,12 @@ const AddAnime = ({ onAddAnime }) => {
     await fetchAdditionalDetails(tmdbAnime.id);
   };
 
-  const handleFormSubmit = (animeData) => {
+  async function handleFormSubmit (animeData) {
     onAddAnime(animeData);
     navigate("/home");
   };
 
-  const handlePageChange = (newPage) => {
+  async function handlePageChange (newPage) {
     if (newPage >= 1 && newPage <= totalPages) {
       handleSearch(newPage);
     }
@@ -432,5 +433,3 @@ const AddAnime = ({ onAddAnime }) => {
 AddAnime.propTypes = {
   onAddAnime: PropTypes.func.isRequired,
 };
-
-export default AddAnime;

@@ -18,7 +18,7 @@ export default function Authentication() {
     const navigate = useNavigate();
     const { login } = useAuth();
 
-    const handleSubmit = async (e) => {
+    async function handleSubmit (e) {
         e.preventDefault();
         const url = isLogin ? 'http://localhost/mal-project/login.php' : 'http://localhost/mal-project/register.php';
 
@@ -32,6 +32,7 @@ export default function Authentication() {
 
             if (isLogin && response.data.message === "Login successful") {
                 login({
+                    id: response.data.user.id,
                     username: response.data.user.username,
                     role: response.data.user.role
                 });
