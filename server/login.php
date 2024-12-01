@@ -16,7 +16,7 @@ $data = json_decode(file_get_contents("php://input"));
 $username = $data->username;
 $password = $data->password;
 
-$sql = "SELECT id, username, password FROM users WHERE username = ?";
+$sql = "SELECT id, username, password, role FROM users WHERE username = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $username);
 $stmt->execute();
@@ -25,7 +25,14 @@ $result = $stmt->get_result();
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
     if (password_verify($password, $row['password'])) {
-        echo json_encode(array("message" => "Login successful"));
+        echo json_encode(array(
+            "message" => "Login successful",
+            "user" => array(
+                "id" => $row['id'],
+                "username" => $row['username'],
+                "role" => $row['role']
+            )
+        ));
     } else {
         echo json_encode(array("message" => "Invalid username or password"));
     }
