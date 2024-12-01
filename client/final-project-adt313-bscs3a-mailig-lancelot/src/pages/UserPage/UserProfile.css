@@ -1,0 +1,13 @@
+.review-anime-title {
+    font-weight: bold;
+    font-size: 1.1em; 
+    margin-bottom: 0.5em;
+    cursor: pointer;
+    color: #2e86de;
+    transition: color 0.3s ease;
+  }
+  
+  .review-anime-title:hover {
+    color: #2164ad;
+    text-decoration: underline;
+  }

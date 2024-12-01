@@ -1,18 +1,24 @@
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
 import Home from "./pages/Home/Home";
 import AddAnime from "./pages/AddAnime/AddAnime";
 import Authentication from "./pages/Login&Register/Authentication";
 import AnimeDetails from "./pages/AnimeDetails/AnimeDetails";
+import UserProfile from "./pages/UserPage/UserProfile";
 import "./App.css";
 import axios from "axios";
 import { AuthProvider, useAuth } from "./AuthContext";
 import Navbar from "./pages/Navbar/Navbar";
 import { AnimeProvider } from "./AnimeContext";
-import PropTypes from 'prop-types';
+import PropTypes from "prop-types";
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
-  
+
   if (!user) {
     return <Navigate to="/" replace />;
   }
@@ -64,6 +70,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AnimeDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/user-profile"
+              element={
+                <ProtectedRoute>
+                  <UserProfile />
                 </ProtectedRoute>
               }
             />
