@@ -116,7 +116,7 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
       </div>
       <div className="flex">
         <button type="submit" className="bg-blue add-anime-shared-button">
-          {anime.id ? "Update" : "Add"} Anime
+          Add Anime
         </button>
         <button
           type="button"

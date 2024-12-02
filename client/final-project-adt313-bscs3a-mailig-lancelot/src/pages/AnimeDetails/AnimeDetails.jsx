@@ -11,7 +11,6 @@ import { AiOutlineStar as OutlineStar } from "react-icons/ai";
 
 const TMDB_API_KEY = "2c7e4cf1a9c1270547b2397569f7ad40";
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
-const API_BASE_URL = "http://localhost/mal-project";
 
 export default function AnimeDetails() {
   const { animeId } = useParams();
@@ -19,17 +18,20 @@ export default function AnimeDetails() {
   const [localAnimeDetails, setLocalAnimeDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [allReviews, setAllReviews] = useState([]);
   const navigate = useNavigate();
   const { animeList } = useAnime();
-  const { user } = useAuth();
+  const { user, favorites, loadingFavorites, updateFavorites } = useAuth();
+  const API_BASE_URL = "http://localhost/mal-project";
 
   console.log("All reviews: ", allReviews);
   
+  const isFavorite = useMemo(() => {
+    return favorites && favorites.includes(parseInt(animeId));
+  }, [favorites, animeId]);
 
   useEffect(() => {
     const fetchTMDBDetails = async (tmdbId) => {
@@ -64,7 +66,6 @@ export default function AnimeDetails() {
         setLocalAnimeDetails(foundAnime);
         fetchTMDBDetails(foundAnime.tmdb_id);
         if (user) {
-          checkFavoriteStatus(foundAnime.id);
           fetchUserRating();
           fetchAllReviews();
         }
@@ -74,19 +75,6 @@ export default function AnimeDetails() {
       setLoading(false);
     }
   }, [animeId, animeList, user, localAnimeDetails]);
-
-  async function checkFavoriteStatus(animeId) {
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/get_favorites.php?userId=${user.id}`
-      );
-      const favorites = JSON.parse(response.data.favorites) || [];
-      setIsFavorite(favorites.includes(animeId));
-    } catch (error) {
-      console.error("Error fetching favorite status:", error);
-      setIsFavorite(false);
-    }
-  }
 
   const fetchUserRating = async () => {
     try {
@@ -134,32 +122,13 @@ export default function AnimeDetails() {
     }
   }, [localAnimeDetails]);
 
-  async function handleToggleFavorite() {
+  const handleToggleFavorite = async () => {
     if (!user) {
       navigate("/login");
       return;
     }
-
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/update_favorites.php`,
-        {
-          userId: user.id,
-          animeId: parseInt(animeId),
-          action: isFavorite ? "remove" : "add",
-        }
-      );
-
-      if (response.data.success) {
-        setIsFavorite(!isFavorite);
-      } else {
-        setError(response.data.message || "Failed to update favorites.");
-      }
-    } catch (error) {
-      setError("Failed to update favorites.");
-      console.error("Error updating favorites:", error);
-    }
-  }
+    await updateFavorites(user.id, parseInt(animeId), isFavorite ? "remove" : "add");
+  };
 
   const handleRatingHover = (rating) => {
     setHoverRating(rating);
@@ -200,12 +169,13 @@ export default function AnimeDetails() {
         reviewText: reviewText,
       });
       fetchAllReviews();
+      setReviewText("");
     } catch (error) {
       console.error("Error submitting review:", error);
     }
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading || loadingFavorites) return <div className="loading">Loading...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!localAnimeDetails)
     return <div className="loading">No anime details found.</div>;
@@ -230,9 +200,9 @@ export default function AnimeDetails() {
 
   return (
     <div className="anime-details-container">
-      <button onClick={() => navigate(-1)} className="back-button">
+      {/* <button onClick={() => navigate(-1)} className="back-button">
         Back
-      </button>
+      </button> */}
       <div className="anime-details-content">
         <div className="left-section">
           {coverPhoto ? (

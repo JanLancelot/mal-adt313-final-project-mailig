@@ -5,6 +5,10 @@ import './Navbar.css';
 export default function Navbar() {
     const { user, logout } = useAuth();
 
+    const getInitials = (username) => {
+        return username.charAt(0);
+    };
+
     return (
         <nav className="navbar">
             <div className="navbar-container">
@@ -14,7 +18,12 @@ export default function Navbar() {
                 <div className="navbar-links">
                     {user ? (
                         <>
-                            <span className="navbar-username">Welcome, {user.username}</span>
+                            <Link to="/user-profile" className="user-profile-link">
+                                <div className="profile-icon">
+                                    {getInitials(user.username)}
+                                </div>
+                                <span className="navbar-username">{user.username}</span>
+                            </Link>
                             <button onClick={logout} className="logout-button">Logout</button>
                         </>
                     ) : (
@@ -26,4 +35,4 @@ export default function Navbar() {
             </div>
         </nav>
     );
-};
+}

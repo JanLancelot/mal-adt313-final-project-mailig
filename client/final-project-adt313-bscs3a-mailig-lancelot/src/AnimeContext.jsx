@@ -98,6 +98,8 @@ export function AnimeProvider({ children }) {
 
         deleteAnime: async (id) => {
             try {
+                console.log(id);
+                
                 await axiosInstance.delete('', { data: { id } });
                 fetchAnime();
             } catch (err) {

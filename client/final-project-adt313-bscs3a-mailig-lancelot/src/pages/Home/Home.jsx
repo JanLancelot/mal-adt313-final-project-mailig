@@ -7,130 +7,134 @@ import { useAuth } from "../../AuthContext";
 import HeroSlider from "../HeroSlider/HeroSlider";
 
 const AnimeCard = React.memo(({ anime, onUpdate, onDelete, isAdmin }) => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const handleViewDetails = useCallback(() => {
-        navigate(`/anime/${anime.id}`);
-    }, [navigate, anime.id]);
+  const handleViewDetails = useCallback(() => {
+    navigate(`/anime/${anime.id}`);
+  }, [navigate, anime.id]);
 
-    const genresArray = useMemo(() => {
-      return anime.genres ? JSON.parse(anime.genres) : [];
-    }, [anime.genres]);
-      
-    const formattedReleaseDate =  useMemo(() => {
-      return anime.releaseDate
-      ? new Date(anime.releaseDate).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
+  const genresArray = useMemo(() => {
+    return anime.genres ? JSON.parse(anime.genres) : [];
+  }, [anime.genres]);
+
+  const formattedReleaseDate = useMemo(() => {
+    return anime.releaseDate
+      ? new Date(anime.releaseDate).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
         })
-      : 'N/A';
-      }, [anime.releaseDate]);    
+      : "N/A";
+  }, [anime.releaseDate]);
 
-    return (
-        <div className="anime-card">
-            <div className="anime-card__image-wrapper">
-                {anime.coverPhoto ? (
-                    <img
-                        src={anime.coverPhoto}
-                        alt={`${anime.title} Cover`}
-                        className="anime-card__image"
-                        loading="lazy"
-                    />
-                ) : (
-                    <div className="anime-card__no-image">No Image Available</div>
-                )}
-                <div className="anime-card__score">
-                    <span className="anime-card__score-number">{anime.score}</span>
-                </div>
-            </div>
-            <div className="anime-card__content">
-                <h2 className="anime-card__title">{anime.title}</h2>
-                <div className="anime-card__meta">
-                    <div className="anime-card__meta-item">
-                        <span className="anime-card__meta-label">Popularity:</span>
-                        <span className="anime-card__meta-value">{anime.popularity || 'N/A'}</span>
-                    </div>
-                    <div className="anime-card__meta-item">
-                        <span className="anime-card__meta-label">Released:</span>
-                        <span className="anime-card__meta-value">{formattedReleaseDate}</span>
-                    </div>
-                </div>
-                <div className="anime-card__genres">
-                    {genresArray.map((genre, index) => (
-                        <span key={index} className="anime-card__genre-tag">
-                            {genre}
-                        </span>
-                    ))}
-                </div>
-                <p className="anime-card__synopsis">
-                    {anime.synopsis
-                        ? anime.synopsis.length > 150
-                            ? `${anime.synopsis.substring(0, 150)}...`
-                            : anime.synopsis
-                        : "No synopsis available."}
-                </p>
-                <div className="anime-card__actions">
-                    {isAdmin && (
-                        <>
-                            <button
-                                onClick={() => onUpdate(anime)}
-                                className="anime-card__button anime-card__button--update"
-                            >
-                                <span className="button-icon">✎</span>
-                                Update
-                            </button>
-                            <button
-                                onClick={() => onDelete(anime.id)}
-                                className="anime-card__button anime-card__button--delete"
-                            >
-                                <span className="button-icon">✖</span>
-                                Delete
-                            </button>
-                        </>
-                    )}
-                    <button
-                        onClick={handleViewDetails}
-                        className="anime-card__button anime-card__button--view"
-                    >
-                        <span className="button-icon">👁</span>
-                        View Details
-                    </button>
-                </div>
-            </div>
+  return (
+    <div className="anime-card">
+      <div className="anime-card__image-wrapper">
+        {anime.coverPhoto ? (
+          <img
+            src={anime.coverPhoto}
+            alt={`${anime.title} Cover`}
+            className="anime-card__image"
+            loading="lazy"
+          />
+        ) : (
+          <div className="anime-card__no-image">No Image Available</div>
+        )}
+        <div className="anime-card__score">
+          <span className="anime-card__score-number">{anime.score}</span>
         </div>
-    );
+      </div>
+      <div className="anime-card__content">
+        <h2 className="anime-card__title">{anime.title}</h2>
+        <div className="anime-card__meta">
+          <div className="anime-card__meta-item">
+            <span className="anime-card__meta-label">Popularity:</span>
+            <span className="anime-card__meta-value">
+              {anime.popularity || "N/A"}
+            </span>
+          </div>
+          <div className="anime-card__meta-item">
+            <span className="anime-card__meta-label">Released:</span>
+            <span className="anime-card__meta-value">
+              {formattedReleaseDate}
+            </span>
+          </div>
+        </div>
+        <div className="anime-card__genres">
+          {genresArray.map((genre, index) => (
+            <span key={index} className="anime-card__genre-tag">
+              {genre}
+            </span>
+          ))}
+        </div>
+        <p className="anime-card__synopsis">
+          {anime.synopsis
+            ? anime.synopsis.length > 150
+              ? `${anime.synopsis.substring(0, 150)}...`
+              : anime.synopsis
+            : "No synopsis available."}
+        </p>
+        <div className="anime-card__actions">
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => onUpdate(anime)}
+                className="anime-card__button anime-card__button--update"
+              >
+                <span className="button-icon">✎</span>
+                Update
+              </button>
+              <button
+                onClick={() => onDelete(anime.id)}
+                className="anime-card__button anime-card__button--delete"
+              >
+                <span className="button-icon">✖</span>
+                Delete
+              </button>
+            </>
+          )}
+          <button
+            onClick={handleViewDetails}
+            className="anime-card__button anime-card__button--view"
+          >
+            <span className="button-icon">👁</span>
+            View Details
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 });
 
-AnimeCard.displayName = 'AnimeCard';
+AnimeCard.displayName = "AnimeCard";
 
 AnimeCard.propTypes = {
-    anime: PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        title: PropTypes.string.isRequired,
-        score: PropTypes.number.isRequired,
-        synopsis: PropTypes.string,
-        coverPhoto: PropTypes.string,
-        popularity: PropTypes.number,
-        releaseDate: PropTypes.string,
-        genres: PropTypes.string,
-    }).isRequired,
-    onUpdate: PropTypes.func.isRequired,
-    onDelete: PropTypes.func.isRequired,
-    isAdmin: PropTypes.bool.isRequired,
+  anime: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    title: PropTypes.string.isRequired,
+    score: PropTypes.number.isRequired,
+    synopsis: PropTypes.string,
+    coverPhoto: PropTypes.string,
+    popularity: PropTypes.number,
+    releaseDate: PropTypes.string,
+    genres: PropTypes.string,
+  }).isRequired,
+  onUpdate: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  isAdmin: PropTypes.bool.isRequired,
 };
 
 const AnimeForm = ({ anime, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState(() => ({
-      id: anime ? anime.id : null,
-      tmdb_id: anime ? anime.tmdb_id : "",
-      title: anime ? anime.title : "",
-      score: anime ? anime.score : "",
-      synopsis: anime ? anime.synopsis : "",
-      coverPhoto: anime ? anime.coverPhoto : "",
-      popularity: anime ? anime.popularity : "",
-      releaseDate: anime ? anime.releaseDate : "",
-      genres: anime && anime.genres ? JSON.parse(anime.genres) : [],
+    id: anime ? anime.id : null,
+    tmdb_id: anime ? anime.tmdb_id : "",
+    title: anime ? anime.title : "",
+    score: anime ? anime.score : "",
+    synopsis: anime ? anime.synopsis : "",
+    coverPhoto: anime ? anime.coverPhoto : "",
+    popularity: anime ? anime.popularity : "",
+    releaseDate: anime ? anime.releaseDate : "",
+    genres: anime && anime.genres ? JSON.parse(anime.genres) : [],
   }));
   const [newGenre, setNewGenre] = useState("");
 
@@ -142,38 +146,41 @@ const AnimeForm = ({ anime, onSubmit, onCancel }) => {
     }));
   }, []);
 
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
 
-    const url = "http://localhost/mal-project/anime_operations.php";
-    const method = anime ? "PUT" : "POST";
+      const url = "http://localhost/mal-project/anime_operations.php";
+      const method = anime ? "PUT" : "POST";
 
-    try {
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          score: parseFloat(formData.score),
-          popularity: parseFloat(formData.popularity),
-        }),
-      });
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...formData,
+            score: parseFloat(formData.score),
+            popularity: parseFloat(formData.popularity),
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (response.ok) {
-        onSubmit(data);
-      } else {
-        console.error("Error:", data.message);
-        alert(data.message);
+        if (response.ok) {
+          onSubmit(data);
+        } else {
+          console.error("Error:", data.message);
+          alert(data.message);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred while saving the anime");
       }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("An error occurred while saving the anime");
-    }
-  }, [formData, onSubmit, anime]);
+    },
+    [formData, onSubmit, anime]
+  );
 
   const addGenre = useCallback(() => {
     if (newGenre && !formData.genres.includes(newGenre)) {
@@ -354,36 +361,43 @@ const Home = () => {
 
   useEffect(() => {
     if (user) {
-        console.log("Test!");
+      console.log("Test!");
       fetchAnime();
-    }    
+    }
   }, [user, location.pathname]);
 
   useEffect(() => {
-    if (!user ) {
+    if (!user) {
       navigate("/");
     }
   }, [user, navigate]);
-  
 
-  const handleUpdate = useCallback(async (updatedAnime) => {
-    try {
-      await updateAnime(updatedAnime);
-      setEditingAnime(null);
-    } catch (err) {
-      console.error("Failed to update anime", err);
-    }
-  }, [updateAnime]);
-
-  const handleDelete = useCallback(async (id) => {
-    if (window.confirm("Are you sure you want to delete this anime?")) {
+  const handleUpdate = useCallback(
+    async (updatedAnime) => {
       try {
-        await deleteAnime(id);
+        await updateAnime(updatedAnime);
+        setEditingAnime(null);
       } catch (err) {
-        console.error("Failed to delete anime", err);
+        console.error("Failed to update anime", err);
       }
-    }
-  }, [deleteAnime]);
+    },
+    [updateAnime]
+  );
+
+  const handleDelete = useCallback(
+    async (id) => {
+      console.log("Deleted Anime ID: ", id);
+
+      if (window.confirm("Are you sure you want to delete this anime?")) {
+        try {
+          await deleteAnime(id);
+        } catch (err) {
+          console.error("Failed to delete anime", err);
+        }
+      }
+    },
+    [deleteAnime]
+  );
 
   const handleSearchChange = useCallback((event) => {
     setSearchQuery(event.target.value);
@@ -407,7 +421,8 @@ const Home = () => {
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
       const scoreMatches =
-        filterScore === "" || parseFloat(anime.score) >= parseFloat(filterScore);
+        filterScore === "" ||
+        parseFloat(anime.score) >= parseFloat(filterScore);
 
       let genreMatches = true;
       if (filterGenre) {
@@ -427,19 +442,24 @@ const Home = () => {
         (a, b) => (b.popularity || 0) - (a.popularity || 0)
       );
     } else if (sortBy === "score") {
-      return [...filteredAndSearchedAnimeList].sort((a, b) => b.score - a.score);
+      return [...filteredAndSearchedAnimeList].sort(
+        (a, b) => b.score - a.score
+      );
     }
     return filteredAndSearchedAnimeList;
   }, [animeList, searchQuery, filterScore, sortBy, filterGenre]);
 
-  const handleAddNewAnime = useCallback(async (newAnime) => {
-    try {
-      await addAnime(newAnime);
-      setEditingAnime(null); 
-    } catch (err) {
-      console.error("Failed to add new anime", err);
-    }
-  }, [addAnime]);
+  const handleAddNewAnime = useCallback(
+    async (newAnime) => {
+      try {
+        await addAnime(newAnime);
+        setEditingAnime(null);
+      } catch (err) {
+        console.error("Failed to add new anime", err);
+      }
+    },
+    [addAnime]
+  );
 
   const handleCancelAdd = useCallback(() => {
     setEditingAnime(null);
@@ -454,91 +474,90 @@ const Home = () => {
   if (!user) return null;
 
   return (
-    <div className="container">
+    <div>
       <HeroSlider animes={topAnime} />
-      <div className="content">
-        <div className="page-header">
-          <h2>Anime List</h2>
-          {isAdmin && (
-            <button
-              onClick={navToAddAnime}
-              className="add-anime-button"
-            >
-              Add Anime
-            </button>
-          )}
-        </div>
-
-        <div className="search-filter-bar">
-          <input
-            type="text"
-            placeholder="Search by title..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="search-input"
-          />
-          <select
-            value={filterScore}
-            onChange={handleFilterScoreChange}
-            className="filter-select"
-          >
-            <option value="">Filter by Score</option>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
-              <option key={score} value={score}>
-                {score}+
-              </option>
-            ))}
-          </select>
-          <select
-            value={sortBy}
-            onChange={handleSortChange}
-            className="filter-select"
-          >
-            <option value="">Sort By</option>
-            <option value="popularity">Popularity</option>
-            <option value="score">Score</option>
-          </select>
-          <select
-            value={filterGenre}
-            onChange={handleFilterGenreChange}
-            className="filter-select"
-          >
-            <option value="">Filter by Genre</option>
-            {availableGenres.map((genre, index) => (
-              <option key={index} value={genre}>
-                {genre}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {editingAnime && (
-          <div className="edit-form-overlay">
-            <div className="edit-form-container">
-              <h2>{editingAnime.id ? "Edit Anime" : "Add New Anime"}</h2>
-              <AnimeForm
-                anime={editingAnime}
-                onSubmit={editingAnime.id ? handleUpdate : handleAddNewAnime}
-                onCancel={handleCancelAdd}
-              />
-            </div>
+      <div className="container">
+        <div className="content">
+          <div className="page-header">
+            <h2>Anime List</h2>
+            {isAdmin && (
+              <button onClick={navToAddAnime} className="add-anime-button">
+                Add Anime
+              </button>
+            )}
           </div>
-        )}
 
-        <div className="anime-grid">
-          {sortedAnimeList.map((anime) => (
-            <AnimeCard
-            key={anime.id}
-            anime={anime}
-            onUpdate={() => setEditingAnime(anime)}
-            onDelete={handleDelete}
-            isAdmin={isAdmin}
-          />
-        ))}
+          <div className="search-filter-bar">
+            <input
+              type="text"
+              placeholder="Search by title..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="search-input"
+            />
+            <select
+              value={filterScore}
+              onChange={handleFilterScoreChange}
+              className="filter-select"
+            >
+              <option value="">Filter by Score</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
+                <option key={score} value={score}>
+                  {score}+
+                </option>
+              ))}
+            </select>
+            <select
+              value={sortBy}
+              onChange={handleSortChange}
+              className="filter-select"
+            >
+              <option value="">Sort By</option>
+              <option value="popularity">Popularity</option>
+              <option value="score">Score</option>
+            </select>
+            <select
+              value={filterGenre}
+              onChange={handleFilterGenreChange}
+              className="filter-select"
+            >
+              <option value="">Filter by Genre</option>
+              {availableGenres.map((genre, index) => (
+                <option key={index} value={genre}>
+                  {genre}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {editingAnime && (
+            <div className="edit-form-overlay">
+              <div className="edit-form-container">
+                <h2>{editingAnime.id ? "Edit Anime" : "Add New Anime"}</h2>
+                <AnimeForm
+                  anime={editingAnime}
+                  onSubmit={editingAnime.id ? handleUpdate : handleAddNewAnime}
+                  onCancel={handleCancelAdd}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="anime-grid">
+            {sortedAnimeList.map((anime) => (
+              <AnimeCard
+                key={anime.id}
+                anime={anime}
+                onUpdate={() => setEditingAnime(anime)}
+                onDelete={handleDelete}
+                isAdmin={isAdmin}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default Home;

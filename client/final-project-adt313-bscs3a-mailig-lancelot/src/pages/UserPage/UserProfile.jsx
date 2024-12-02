@@ -1,44 +1,20 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../AuthContext';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAnime } from '../../AnimeContext';
 import PropTypes from "prop-types";
 import './UserProfile.css';
 
-const API_BASE_URL = 'http://localhost/mal-project';
-
 export default function UserProfile() {
-    const { user } = useAuth();
+    const { user, favorites, reviews, loadingReviews, fetchReviews } = useAuth();
     const { animeList } = useAnime();
-    const [favorites, setFavorites] = useState([]);
-    const [reviews, setReviews] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!user) return;
-
-        const fetchUserData = async () => {
-            try {
-                const favoritesResponse = await axios.get(`${API_BASE_URL}/get_favorites.php?userId=${user.id}`);
-                const reviewsResponse = await axios.get(`${API_BASE_URL}/get_user_reviews.php?userId=${user.id}`);
-
-                const favoritesData = JSON.parse(favoritesResponse.data.favorites) || [];
-                setFavorites(favoritesData);
-                setReviews(reviewsResponse.data.reviews || []);
-
-                setLoading(false);
-            } catch (err) {
-                setError("Error fetching user data.");
-                setLoading(false);
-                console.error(err);
-            }
-        };
-
-        fetchUserData();
-    }, [user]);
+        if (user && !loadingReviews && reviews.length === 0) {
+            fetchReviews(user.id);
+        }
+    }, [user, loadingReviews, reviews.length, fetchReviews]);
 
     const favoriteAnimeDetails = useMemo(() => {
         return favorites.map(animeId => animeList.find(anime => anime.id === animeId)).filter(Boolean);
@@ -46,11 +22,10 @@ export default function UserProfile() {
 
     const handleAnimeClick = useCallback((animeId) => {
         navigate(`/anime/${animeId}`);
-      }, [navigate]);
+    }, [navigate]);
 
     if (!user) return <p>You must be logged in to view this page.</p>;
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error}</div>;
+    if (loadingReviews) return <div>Loading...</div>;
 
     return (
         <div className="user-page-container">
@@ -62,11 +37,7 @@ export default function UserProfile() {
                 ) : (
                     <div className="anime-grid">
                         {favoriteAnimeDetails.map((anime) => (
-                            <AnimeCard
-                                key={anime.id}
-                                anime={anime}
-                                isAdmin={user && user.isAdmin}
-                            />
+                            <AnimeCard key={anime.id} anime={anime} />
                         ))}
                     </div>
                 )}
