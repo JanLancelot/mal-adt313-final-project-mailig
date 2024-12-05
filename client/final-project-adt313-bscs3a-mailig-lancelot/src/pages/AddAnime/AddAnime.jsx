@@ -31,7 +31,6 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
 
     onSubmit({
       id: anime.id,
-      tmdb_id: anime.tmdb_id,
       title,
       score: formattedScore,
       synopsis,

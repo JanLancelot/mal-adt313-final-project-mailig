@@ -72,13 +72,12 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
     }
   };
 
-  // I moved the update function here because of some weird anime_operation.php bug.
+  // I moved the update function here sir because of some weird anime_operation.php bug.
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formattedScore = parseFloat(parseFloat(score).toFixed(3)) || 0;
     const animeData = {
-      tmdb_id: anime.tmdb_id || null,
       title,
       score: formattedScore,
       synopsis,
