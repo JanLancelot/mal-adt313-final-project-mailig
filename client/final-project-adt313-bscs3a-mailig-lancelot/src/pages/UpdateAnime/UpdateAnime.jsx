@@ -43,6 +43,14 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
     anime.genres ? JSON.parse(anime.genres) : []
   );
 
+  const [numberOfEpisodes, setNumberOfEpisodes] = useState(
+    anime.number_of_episodes || ""
+  );
+  const [numberOfSeasons, setNumberOfSeasons] = useState(
+    anime.number_of_seasons || ""
+  );
+  const [status, setStatus] = useState(anime.status || "");
+
   const [localCast, setLocalCast] = useState(cast);
   const [localCrew, setLocalCrew] = useState(crew);
   const [localPhotos, setLocalPhotos] = useState(photos);
@@ -64,6 +72,8 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
     }
   };
 
+  // I moved the update function here because of some weird anime_operation.php bug.
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formattedScore = parseFloat(parseFloat(score).toFixed(3)) || 0;
@@ -76,6 +86,10 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
       popularity: parseFloat(popularity) || 0,
       releaseDate,
       genres: JSON.stringify(genres),
+      number_of_episodes: parseInt(numberOfEpisodes, 10) || 0,
+      number_of_seasons: parseInt(numberOfSeasons, 10) || 0,
+      status,
+      date_updated: new Date().toISOString().slice(0, 19).replace("T", " "),
       id: anime.id,
     };
 
@@ -151,6 +165,9 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
             : JSON.parse(anime.genres)
           : []
       );
+      setNumberOfEpisodes(anime.number_of_episodes || "");
+      setNumberOfSeasons(anime.number_of_seasons || "");
+      setStatus(anime.status || "");
     }
     setLocalCast(cast);
     setLocalCrew(crew);
@@ -269,6 +286,40 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
                 className="input-field readonly"
               />
             </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="numberOfEpisodes">Number of Episodes</label>
+              <input
+                id="numberOfEpisodes"
+                type="number"
+                value={numberOfEpisodes}
+                onChange={(e) => setNumberOfEpisodes(e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="numberOfSeasons">Number of Seasons</label>
+              <input
+                id="numberOfSeasons"
+                type="number"
+                value={numberOfSeasons}
+                onChange={(e) => setNumberOfSeasons(e.target.value)}
+                className="input-field"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="status">Status</label>
+            <input
+              id="status"
+              type="text"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="input-field"
+            />
           </div>
 
           <div className="form-group">

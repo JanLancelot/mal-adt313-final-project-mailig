@@ -1,3 +1,23 @@
+:root {
+  --primary-color: #4299e1;
+  --secondary-color: #4299e1;
+  --success-color: #48bb78;
+  --gray-color: #6b7280;
+  --text-primary: #2d3748;
+  --text-secondary: #4b5563;
+  --border-color: #e5e7eb;
+  --background-color: #f9fafb;
+  --card-background: #ffffff;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --font-size-base: 1rem;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-base: 1.5;
+}
+
 .add-anime-container {
   width: 100%;
   max-width: 1200px;

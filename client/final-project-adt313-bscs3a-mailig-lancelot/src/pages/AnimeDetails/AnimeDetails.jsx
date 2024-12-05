@@ -231,8 +231,17 @@ export default function AnimeDetails() {
   if (error) return <div className="error">{error}</div>;
   if (!localAnimeDetails) return <div className="error">Anime not found.</div>;
 
-  const { title, score, synopsis, coverPhoto, popularity, releaseDate } =
-    localAnimeDetails;
+  const {
+    title,
+    score,
+    synopsis,
+    coverPhoto,
+    popularity,
+    releaseDate,
+    number_of_episodes,
+    number_of_seasons,
+    status,
+  } = localAnimeDetails;
 
   const cast = animeCasts[animeId] || [];
   const crew = animeCrews[animeId] || [];
@@ -323,6 +332,30 @@ export default function AnimeDetails() {
               Popularity: <span className="highlight">{popularity}</span>
             </p>
           )}
+
+          <p>
+            Status: <span className="highlight">{status}</span>
+          </p>
+          <p>
+            Number of Episodes:{" "}
+            <span className="highlight">{number_of_episodes}</span>
+          </p>
+          <p>
+            Number of Seasons:{" "}
+            <span className="highlight">{number_of_seasons}</span>
+          </p>
+          <p>
+            Date Created:{" "}
+            <span className="highlight">
+              {new Date(localAnimeDetails.date_created).toLocaleDateString()}
+            </span>
+          </p>
+          <p>
+            Date Updated:{" "}
+            <span className="highlight">
+              {new Date(localAnimeDetails.date_updated).toLocaleDateString()}
+            </span>
+          </p>
         </div>
 
         <div className="right-section">

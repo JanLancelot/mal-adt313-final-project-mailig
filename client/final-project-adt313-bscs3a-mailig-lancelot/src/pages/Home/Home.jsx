@@ -481,7 +481,7 @@ const Home = () => {
   return (
     <div>
       <HeroSlider animes={topAnime} />
-      <div className="container">
+      <div className="home-container">
         <div className="content">
           <div className="page-header">
             <h2>Anime List</h2>

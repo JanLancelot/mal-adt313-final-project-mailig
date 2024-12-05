@@ -9,9 +9,7 @@ const TMDB_API_KEY = "2c7e4cf1a9c1270547b2397569f7ad40";
 const TMDB_SEARCH_URL = "https://api.themoviedb.org/3/search/tv";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
-// const API_BASE_URL = "http://localhost/mal-project/";
-
-function AnimeForm({ anime = {}, onSubmit, onCancel }) {
+function AnimeForm({ anime, onSubmit, onCancel }) {
   const [title, setTitle] = useState(anime.title || "");
   const [score, setScore] = useState(anime.score || "");
   const [synopsis, setSynopsis] = useState(anime.synopsis || "");
@@ -23,10 +21,12 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
   const [crew, setCrew] = useState(anime.crew || []);
   const [photos, setPhotos] = useState(anime.photos || []);
   const [videos, setVideos] = useState(anime.videos || []);
+  const [numberOfEpisodes, setNumberOfEpisodes] = useState(anime.number_of_episodes || "");
+  const [numberOfSeasons, setNumberOfSeasons] = useState(anime.number_of_seasons || "");
+  const [status, setStatus] = useState(anime.status || "");
 
   function handleSubmit(e) {
     e.preventDefault();
-
     const formattedScore = parseFloat(parseFloat(score).toFixed(3)) || 0;
 
     onSubmit({
@@ -43,6 +43,9 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
       crew: JSON.stringify(crew),
       photos: JSON.stringify(photos),
       videos: JSON.stringify(videos),
+      number_of_episodes: parseInt(numberOfEpisodes, 10) || 0,
+      number_of_seasons: parseInt(numberOfSeasons, 10) || 0,
+      status
     });
   }
 
@@ -59,6 +62,9 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
       setCrew(anime.crew || []);
       setPhotos(anime.photos || []);
       setVideos(anime.videos || []);
+      setNumberOfEpisodes(anime.number_of_episodes || "");
+      setNumberOfSeasons(anime.number_of_seasons || "");
+      setStatus(anime.status || "");
     }
   }, [anime]);
 
@@ -91,8 +97,6 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
     newCrew[index][field] = value;
     setCrew(newCrew);
   };
-
-  console.log("Cast data:", cast);
 
   return (
     <div className="form-container">
@@ -152,7 +156,6 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
               rows="4"
             />
           </div>
-
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="releaseDate">Release Date</label>
@@ -164,7 +167,6 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
                 className="input-field readonly"
               />
             </div>
-
             <div className="form-group">
               <label htmlFor="genres">Genres</label>
               <input
@@ -176,7 +178,39 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
               />
             </div>
           </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="numberOfEpisodes">Number of Episodes</label>
+              <input
+                id="numberOfEpisodes"
+                type="number"
+                value={numberOfEpisodes}
+                onChange={(e) => setNumberOfEpisodes(e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="numberOfSeasons">Number of Seasons</label>
+              <input
+                id="numberOfSeasons"
+                type="number"
+                value={numberOfSeasons}
+                onChange={(e) => setNumberOfSeasons(e.target.value)}
+                className="input-field"
+              />
+            </div>
+          </div>
 
+          <div className="form-group">
+            <label htmlFor="status">Status</label>
+            <input
+              id="status"
+              type="text"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="input-field"
+            />
+          </div>
           <div className="form-group">
             <label htmlFor="coverPhoto">Cover Photo URL</label>
             <input
@@ -198,6 +232,7 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
               </div>
             )}
           </div>
+
         </div>
 
         <div className="form-section">
@@ -453,42 +488,7 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
 }
 
 AnimeForm.propTypes = {
-  anime: PropTypes.shape({
-    id: PropTypes.number,
-    tmdb_id: PropTypes.number,
-    title: PropTypes.string,
-    score: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    synopsis: PropTypes.string,
-    coverPhoto: PropTypes.string,
-    popularity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    releaseDate: PropTypes.string,
-    genres: PropTypes.arrayOf(PropTypes.string),
-    cast: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        name: PropTypes.string.isRequired,
-        character: PropTypes.string.isRequired,
-        profile_path: PropTypes.string,
-      })
-    ),
-    crew: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        name: PropTypes.string.isRequired,
-        job: PropTypes.string.isRequired,
-        profile_path: PropTypes.string,
-      })
-    ),
-    photos: PropTypes.arrayOf(PropTypes.string),
-    videos: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-          .isRequired,
-        key: PropTypes.string.isRequired,
-        name: PropTypes.string,
-      })
-    ),
-  }),
+  anime: PropTypes.object,
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
 };
@@ -500,14 +500,12 @@ export default function AddAnime() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedAnime, setSelectedAnime] = useState({});
-  const [extraDetails, setExtraDetails] = useState({
-    cast: [],
-    crew: [],
-    photos: [],
-    videos: [],
-  });
-
-  console.log(extraDetails);
+  // const [extraDetails, setExtraDetails] = useState({
+  //   cast: [],
+  //   crew: [],
+  //   photos: [],
+  //   videos: [],
+  // });
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -551,36 +549,19 @@ export default function AddAnime() {
           }
         );
         allCast = allCast.concat(response.data.cast);
-        totalPages = response.data.total_pages;
-        page++;
-      } catch (err) {
-        console.error("Failed to fetch cast:", err);
-        break;
-      }
-    } while (page <= totalPages);
-
-    page = 1;
-    totalPages = 1;
-
-    do {
-      try {
-        const response = await axios.get(
-          `${TMDB_BASE_URL}/tv/${animeId}/credits`,
-          {
-            params: { api_key: TMDB_API_KEY, page },
-          }
-        );
         allCrew = allCrew.concat(response.data.crew);
         totalPages = response.data.total_pages;
         page++;
       } catch (err) {
-        console.error("Failed to fetch crew:", err);
+        console.error("Failed to fetch cast and crew:", err);
         break;
       }
     } while (page <= totalPages);
 
     return { cast: allCast, crew: allCrew };
   };
+
+
 
   async function fetchAdditionalDetails(animeId) {
     try {
@@ -600,18 +581,18 @@ export default function AddAnime() {
 
       const genres = detailsResponse.data.genres.map((genre) => genre.name);
 
-      setExtraDetails({
-        cast: castAndCrew.cast,
-        crew: castAndCrew.crew,
-        photos: imagesResponse.data.backdrops.slice(0, 10),
-        videos: videosResponse.data.results.slice(0, 5),
-      });
+      // setExtraDetails({
+      //   cast: castAndCrew.cast,
+      //   crew: castAndCrew.crew,
+      //   photos: imagesResponse.data.backdrops.slice(0, 10),
+      //   videos: videosResponse.data.results.slice(0, 5),
+      // });
 
       setSelectedAnime((prev) => ({
         ...prev,
         genres,
         tmdb_id: animeId,
-        cast: castAndCrew.cast || [], 
+        cast: castAndCrew.cast || [],
         crew: castAndCrew.crew || [],
         photos: imagesResponse.data.backdrops
           .map(
@@ -619,6 +600,9 @@ export default function AddAnime() {
           )
           .slice(0, 10) || [],
         videos: videosResponse.data.results.map((video) => video).slice(0, 5) || [],
+        number_of_episodes: detailsResponse.data.number_of_episodes,
+        number_of_seasons: detailsResponse.data.number_of_seasons,
+        status: detailsResponse.data.status,
       }));
     } catch (err) {
       console.error("Failed to fetch additional details:", err);
