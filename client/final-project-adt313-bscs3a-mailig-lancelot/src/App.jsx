@@ -10,11 +10,11 @@ import Authentication from "./pages/Login&Register/Authentication";
 import AnimeDetails from "./pages/AnimeDetails/AnimeDetails";
 import UserProfile from "./pages/UserPage/UserProfile";
 import "./App.css";
-import axios from "axios";
 import { AuthProvider, useAuth } from "./AuthContext";
 import Navbar from "./pages/Navbar/Navbar";
 import { AnimeProvider } from "./AnimeContext";
 import PropTypes from "prop-types";
+import UpdateAnime from "./pages/UpdateAnime/UpdateAnime";
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -31,16 +31,16 @@ ProtectedRoute.propTypes = {
 };
 
 function App() {
-  const handleAddAnime = async (newAnime) => {
-    try {
-      await axios.post(
-        "http://localhost/mal-project/anime_operations.php",
-        newAnime
-      );
-    } catch (err) {
-      console.error("Failed to add anime", err);
-    }
-  };
+  // const handleAddAnime = async (newAnime) => {
+  //   try {
+  //     await axios.post(
+  //       "http://localhost/mal-project/anime_operations.php",
+  //       newAnime
+  //     );
+  //   } catch (err) {
+  //     console.error("Failed to add anime", err);
+  //   }
+  // };
 
   return (
     <AuthProvider>
@@ -61,7 +61,18 @@ function App() {
               path="/add-anime"
               element={
                 <ProtectedRoute>
-                  <AddAnime onAddAnime={handleAddAnime} />
+                  {/* <AddAnime onAddAnime={handleAddAnime} /> */}
+                  <AddAnime />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/update/:id"
+              element={
+                <ProtectedRoute>
+                  {/* <AddAnime onAddAnime={handleAddAnime} /> */}
+                  <UpdateAnime />
                 </ProtectedRoute>
               }
             />

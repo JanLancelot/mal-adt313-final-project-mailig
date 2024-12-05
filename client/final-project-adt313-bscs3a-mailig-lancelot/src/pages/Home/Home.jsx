@@ -199,6 +199,8 @@ const AnimeForm = ({ anime, onSubmit, onCancel }) => {
     }));
   }, []);
 
+  console.log(formData);
+
   return (
     <form onSubmit={handleSubmit} className="anime-form">
       <div className="form-group">
@@ -349,11 +351,14 @@ const Home = () => {
   const location = useLocation();
   const {
     animeList,
+    animeCasts,
+    animeCrews,
+    animePhotos,
+    animeVideos,
     loading,
     error,
     availableGenres,
     topAnime,
-    updateAnime,
     deleteAnime,
     addAnime,
     fetchAnime,
@@ -373,15 +378,10 @@ const Home = () => {
   }, [user, navigate]);
 
   const handleUpdate = useCallback(
-    async (updatedAnime) => {
-      try {
-        await updateAnime(updatedAnime);
-        setEditingAnime(null);
-      } catch (err) {
-        console.error("Failed to update anime", err);
-      }
+    (anime) => {
+      navigate(`/update/${anime.id}`);
     },
-    [updateAnime]
+    [navigate]
   );
 
   const handleDelete = useCallback(
@@ -427,13 +427,13 @@ const Home = () => {
       let genreMatches = true;
       if (filterGenre) {
         try {
-          const animeGenres = anime.genres ? JSON.parse(anime.genres) : [];
+          const animeGenres = typeof anime.genres === 'string' ? JSON.parse(anime.genres) : [];
           genreMatches = animeGenres.includes(filterGenre);
         } catch (e) {
           console.error("Failed to parse genres for anime", anime, e);
           genreMatches = false;
         }
-      }
+    }
 
       return titleMatches && scoreMatches && genreMatches;
     });
@@ -468,6 +468,11 @@ const Home = () => {
   const navToAddAnime = useCallback(() => {
     navigate("/add-anime");
   }, [navigate]);
+
+  console.log("Anime Casts from Home:", animeCasts);
+  console.log("Anime Crews from Home:", animeCrews);
+  console.log("Anime Photos from Home:", animePhotos);
+  console.log("Anime Videos from Home:", animeVideos);
 
   if (loading) return <div className="loading">Loading...</div>;
   if (error) return <div className="error">{error}</div>;
@@ -548,7 +553,7 @@ const Home = () => {
               <AnimeCard
                 key={anime.id}
                 anime={anime}
-                onUpdate={() => setEditingAnime(anime)}
+                onUpdate={handleUpdate}
                 onDelete={handleDelete}
                 isAdmin={isAdmin}
               />

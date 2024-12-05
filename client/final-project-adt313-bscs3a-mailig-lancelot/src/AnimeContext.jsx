@@ -1,140 +1,206 @@
-import { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import PropTypes from 'prop-types';
-import axios from 'axios';
+import { createContext, useState, useEffect, useContext, useCallback } from "react";
+import PropTypes from "prop-types";
+import axios from "axios";
 
 const AnimeContext = createContext();
-const API_BASE_URL = 'http://localhost/mal-project/anime_operations.php';
+const API_BASE_URL = "http://localhost/mal-project/";
+
+const animeAxiosInstance = axios.create({
+  baseURL: API_BASE_URL + "anime_operations.php",
+  timeout: 5000,
+});
+
+const castAxiosInstance = axios.create({
+  baseURL: API_BASE_URL + "cast_operations.php",
+  timeout: 5000,
+});
+
+const crewAxiosInstance = axios.create({
+  baseURL: API_BASE_URL + "crew_operations.php",
+  timeout: 5000,
+});
+
+const photosAxiosInstance = axios.create({
+  baseURL: API_BASE_URL + "photos_operations.php",
+  timeout: 5000,
+});
+
+const videosAxiosInstance = axios.create({
+  baseURL: API_BASE_URL + "videos_operations.php",
+  timeout: 5000,
+});
 
 const axiosInstance = axios.create({
-  baseURL: API_BASE_URL, 
-  timeout: 5000
+  baseURL: API_BASE_URL,
+  timeout: 5000,
 });
 
 export function AnimeProvider({ children }) {
-    const [state, setState] = useState({
-        animeList: [],
-        loading: true,
-        error: null,
-        availableGenres: [],
-        topAnime: []
+  const [state, setState] = useState({
+    animeList: [],
+    loading: true,
+    error: null,
+    availableGenres: [],
+    topAnime: [],
+    animeCasts: {},
+    animeCrews: {},
+    animePhotos: {},
+    animeVideos: {},
+  });
+
+  const extractAllGenres = useCallback((animes) => {
+    const genres = new Set();
+    animes.forEach((anime) => {
+      if (!anime.genres) return;
+      try {
+        JSON.parse(anime.genres).forEach((genre) => genres.add(genre));
+      } catch (e) {
+        console.error("Failed to parse genres:", anime.title, e);
+      }
     });
+    return Array.from(genres);
+  }, []);
 
-    console.log("Anime List: ", state.animeList);
-    
+  const fetchAnime = useCallback(async () => {
+    try {
+      const { data: animeData } = await animeAxiosInstance.get();
+      const sortedTopAnime = [...animeData].sort((a, b) => b.score - a.score).slice(0, 3);
+      const animeCasts = {};
+      const animeCrews = {};
+      const animePhotos = {};
+      const animeVideos = {};
 
-    const extractAllGenres = useCallback((animes) => {
-        const genres = new Set();
-        animes.forEach(anime => {
-            if (!anime.genres) return;
-            
-            try {
-                const parsedGenres = JSON.parse(anime.genres);
-                parsedGenres.forEach(genre => genres.add(genre));
-            } catch (e) {
-                console.error("Failed to parse genres for anime:", anime.title, e);
-            }
-        });
-        return Array.from(genres);
-    }, []);
+      await Promise.all(
+        animeData.map(async (anime) => {
+          try {
+            const { data: castData } = await castAxiosInstance.get(`?anime_id=${anime.id}`);
+            animeCasts[anime.id] = castData;
 
-    const fetchAnime = useCallback(async () => {
-        try {
-            const { data: animeData } = await axiosInstance.get();
-            const sortedTopAnime = [...animeData]
-                .sort((a, b) => b.score - a.score)
-                .slice(0, 3);
+            const { data: crewData } = await crewAxiosInstance.get(`?anime_id=${anime.id}`);
+            animeCrews[anime.id] = crewData;
 
-            setState(prev => ({
-                ...prev,
-                animeList: animeData,
-                loading: false,
-                availableGenres: extractAllGenres(animeData),
-                topAnime: sortedTopAnime
-            }));
-        } catch (err) {
-            setState(prev => ({
-                ...prev,
-                error: 'Failed to fetch anime list', err,
-                loading: false
-            }));
+            const { data: photosData } = await photosAxiosInstance.get(`?anime_id=${anime.id}`);
+            animePhotos[anime.id] = photosData;
+
+            const { data: videosData } = await videosAxiosInstance.get(`?anime_id=${anime.id}`);
+            animeVideos[anime.id] = videosData;
+          } catch (error) {
+            console.error(`Failed to fetch data for anime ${anime.id}:`, error);
+            animeCasts[anime.id] = [];
+            animeCrews[anime.id] = [];
+            animePhotos[anime.id] = [];
+            animeVideos[anime.id] = [];
+          }
+        })
+      );
+
+      setState((prev) => ({
+        ...prev,
+        animeList: animeData,
+        loading: false,
+        availableGenres: extractAllGenres(animeData),
+        topAnime: sortedTopAnime,
+        animeCasts,
+        animeCrews,
+        animePhotos,
+        animeVideos,
+      }));
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: "Failed to fetch data",
+        err,
+        loading: false,
+      }));
+    }
+  }, [extractAllGenres]);
+
+  useEffect(() => {
+    fetchAnime();
+  }, [fetchAnime]);
+
+  const apiOperations = {
+    addAnime: async (newAnime) => {
+      try {
+        const { data: animeData } = await animeAxiosInstance.post("", newAnime);
+        if (!animeData || !animeData.id) {
+          throw new Error("Failed to add anime or retrieve ID");
         }
-    }, [extractAllGenres]);
 
-    useEffect(() => {
+        const animeId = animeData.id;
+
+        const handleData = async (data, endpoint) => {
+          const promises = data.map((item) =>
+            axiosInstance.post(endpoint, { data: item, anime_id: animeId })
+          );
+          await Promise.all(promises);
+        };
+
+        const parsedCast = typeof newAnime.cast === "string" ? JSON.parse(newAnime.cast) : newAnime.cast;
+        const parsedCrew = typeof newAnime.crew === "string" ? JSON.parse(newAnime.crew) : newAnime.crew;
+        const parsedPhotos = typeof newAnime.photos === "string" ? JSON.parse(newAnime.photos) : newAnime.photos;
+        const parsedVideos = typeof newAnime.videos === "string" ? JSON.parse(newAnime.videos) : newAnime.videos;
+
+        await handleData(Array.isArray(parsedCast) ? parsedCast : [], "cast_operations.php");
+        await handleData(Array.isArray(parsedCrew) ? parsedCrew : [], "crew_operations.php");
+        await handleData(Array.isArray(parsedPhotos) ? parsedPhotos : [], "photos_operations.php");
+        await handleData(Array.isArray(parsedVideos) ? parsedVideos : [], "videos_operations.php");
+
         fetchAnime();
-    }, [fetchAnime]);
+      } catch (error) {
+        setState((prev) => ({ ...prev, error: error.message, loading: false }));
+      }
+    },
+    updateAnime: async (updatedAnime) => {
+      try {
+        await animeAxiosInstance.put("", updatedAnime);
+        const animeId = updatedAnime.id;
 
-    const apiOperations = {
-        addAnime: async (newAnime) => {
-            try {
-                const { data } = await axiosInstance.post('', newAnime);
-                if (data.success) {
-                    fetchAnime();
-                } else {
-                    setState(prev => ({
-                        ...prev,
-                        error: `Failed to add new anime: ${data.message}`
-                    }));
-                }
-            } catch (err) {
-                setState(prev => ({
-                    ...prev,
-                    error: 'Failed to add new anime', err
-                }));
-            }
-        },
+        const handleData = async (data, endpoint, deleteEndpoint) => {
+          await axiosInstance.delete(deleteEndpoint, { data: { anime_id: animeId } });
+          const promises = data.map((item) =>
+            axiosInstance.post(endpoint, { data: item, anime_id: animeId })
+          );
+          await Promise.all(promises);
+        };
 
-        updateAnime: async (updatedAnime) => {
-            try {
-                await axiosInstance.put('', updatedAnime);
-                fetchAnime();
-            } catch (err) {
-                setState(prev => ({
-                    ...prev,
-                    error: 'Failed to update anime', err
-                }));
-            }
-        },
+        await handleData(updatedAnime.cast || [], "cast_operations.php", "cast_operations.php");
+        await handleData(updatedAnime.crew || [], "crew_operations.php", "crew_operations.php");
+        await handleData(updatedAnime.photos || [], "photos_operations.php", "photos_operations.php");
+        await handleData(updatedAnime.videos || [], "videos_operations.php", "videos_operations.php");
 
-        deleteAnime: async (id) => {
-            try {
-                console.log(id);
-                
-                await axiosInstance.delete('', { data: { id } });
-                fetchAnime();
-            } catch (err) {
-                setState(prev => ({
-                    ...prev,
-                    error: 'Failed to delete anime', err
-                }));
-            }
-        }
-    };
+        fetchAnime();
+      } catch (err) {
+        setState((prev) => ({ ...prev, error: "Failed to update anime: " + err.message, loading: false }));
+      }
+    },
 
-    const value = {
-        ...state,
-        ...apiOperations,
-        fetchAnime
-    };
+    deleteAnime: async (id) => {
+      try {
+        await animeAxiosInstance.delete("", { data: { id } });
+        fetchAnime();
+      } catch (err) {
+        setState((prev) => ({ ...prev, error: "Failed to delete anime: " + err.message, loading: false }));
+      }
+    },
+  };
 
-    if (state.loading) return <div className="loading">Loading...</div>;
-    if (state.error) return <div className="error">{state.error}</div>;
-    
-    return (
-        <AnimeContext.Provider value={value}>
-            {children}
-        </AnimeContext.Provider>
-    );
+  const value = { ...state, ...apiOperations, fetchAnime };
+
+  if (state.loading) return <div className="loading">Loading...</div>;
+  if (state.error) return <div className="error">{state.error}</div>;
+
+  return <AnimeContext.Provider value={value}>{children}</AnimeContext.Provider>;
 }
 
 AnimeProvider.propTypes = {
-    children: PropTypes.node.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 export const useAnime = () => {
-    const context = useContext(AnimeContext);
-    if (!context) {
-        throw new Error('useAnime must be used within an AnimeProvider');
-    }
-    return context;
+  const context = useContext(AnimeContext);
+  if (!context) {
+    throw new Error("useAnime must be used within an AnimeProvider");
+  }
+  return context;
 };

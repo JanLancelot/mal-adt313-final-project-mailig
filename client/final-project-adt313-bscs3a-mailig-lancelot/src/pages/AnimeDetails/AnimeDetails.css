@@ -141,6 +141,24 @@
   width: 100%; 
 }
 
+.photos {
+  margin-top: 20px;
+}
+
+.photo-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-gap: 10px;
+}
+
+.anime-photo {
+  width: 100%;
+  height: auto;
+  display: block; 
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .cast-list, .crew-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -148,22 +166,36 @@
   margin-top: 1rem;
 }
 
-.cast-member {
+.cast-member, .crew-member {
   text-align: center;
   transition: transform 0.3s ease;
 }
 
-.cast-member:hover {
+.cast-member:hover, .crew-member:hover {
   transform: translateY(-5px);
 }
 
+.cast-image-container {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #e0e0e0;
+    color: #757575;
+    font-size: 2rem;
+    text-transform: uppercase;
+}
+
 .cast-image {
-  width: 120px;
-  height: 120px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 0.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .cast-member p, .crew-member p {

@@ -1,37 +1,74 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom";
-import "./AddAnime.css";
+import { useNavigate, useParams } from "react-router-dom";
+import "./UpdateAnime.css";
 import { useAnime } from "../../AnimeContext";
 import axios from "axios";
 
-const TMDB_API_KEY = "2c7e4cf1a9c1270547b2397569f7ad40";
-const TMDB_SEARCH_URL = "https://api.themoviedb.org/3/search/tv";
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const API_BASE_URL = "http://localhost/mal-project/";
 
-// const API_BASE_URL = "http://localhost/mal-project/";
+const animeAxiosInstance = axios.create({
+  baseURL: API_BASE_URL + "anime_operations.php",
+  timeout: 5000,
+});
 
-function AnimeForm({ anime = {}, onSubmit, onCancel }) {
+const castAxiosInstance = axios.create({
+  baseURL: API_BASE_URL + "cast_operations.php",
+  timeout: 5000,
+});
+
+const crewAxiosInstance = axios.create({
+  baseURL: API_BASE_URL + "crew_operations.php",
+  timeout: 5000,
+});
+
+const photosAxiosInstance = axios.create({
+  baseURL: API_BASE_URL + "photos_operations.php",
+  timeout: 5000,
+});
+
+const videosAxiosInstance = axios.create({
+  baseURL: API_BASE_URL + "videos_operations.php",
+  timeout: 5000,
+});
+
+function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
   const [title, setTitle] = useState(anime.title || "");
   const [score, setScore] = useState(anime.score || "");
   const [synopsis, setSynopsis] = useState(anime.synopsis || "");
   const [coverPhoto, setCoverPhoto] = useState(anime.coverPhoto || "");
   const [popularity, setPopularity] = useState(anime.popularity || "");
   const [releaseDate, setReleaseDate] = useState(anime.releaseDate || "");
-  const [genres, setGenres] = useState(anime.genres || []);
-  const [cast, setCast] = useState(anime.cast || []);
-  const [crew, setCrew] = useState(anime.crew || []);
-  const [photos, setPhotos] = useState(anime.photos || []);
-  const [videos, setVideos] = useState(anime.videos || []);
+  const [genres, setGenres] = useState(
+    anime.genres ? JSON.parse(anime.genres) : []
+  );
 
-  function handleSubmit(e) {
+  const [localCast, setLocalCast] = useState(cast);
+  const [localCrew, setLocalCrew] = useState(crew);
+  const [localPhotos, setLocalPhotos] = useState(photos);
+  const [localVideos, setLocalVideos] = useState(videos);
+  const navigate = useNavigate();
+
+  console.log("Genres: ", typeof genres);
+
+  const handleDelete = async (endpoint, animeId) => {
+    console.log(
+      `Sending DELETE request to ${endpoint.defaults.baseURL} with anime_id: ${animeId}`
+    );
+    try {
+      await endpoint.delete("", { data: { anime_id: animeId } });
+      return true;
+    } catch (error) {
+      console.error(`Error deleting from ${endpoint.defaults.baseURL}:`, error);
+      return false;
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
     const formattedScore = parseFloat(parseFloat(score).toFixed(3)) || 0;
-
-    onSubmit({
-      id: anime.id,
-      tmdb_id: anime.tmdb_id,
+    const animeData = {
+      tmdb_id: anime.tmdb_id || null,
       title,
       score: formattedScore,
       synopsis,
@@ -39,12 +76,65 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
       popularity: parseFloat(popularity) || 0,
       releaseDate,
       genres: JSON.stringify(genres),
-      cast: JSON.stringify(cast),
-      crew: JSON.stringify(crew),
-      photos: JSON.stringify(photos),
-      videos: JSON.stringify(videos),
-    });
-  }
+      id: anime.id,
+    };
+
+    try {
+      await animeAxiosInstance.put("", animeData);
+
+      const deletePromises = [
+        handleDelete(castAxiosInstance, anime.id),
+        handleDelete(crewAxiosInstance, anime.id),
+        handleDelete(photosAxiosInstance, anime.id),
+        handleDelete(videosAxiosInstance, anime.id),
+      ];
+      await Promise.all(deletePromises);
+
+      const postPromises = [
+        ...localCast.map((castMember) => {
+          const castData = { ...castMember, anime_id: anime.id };
+          return castAxiosInstance.post("", {
+            data: castData,
+            anime_id: anime.id,
+          });
+        }),
+        ...localCrew.map((crewMember) => {
+          const crewData = { ...crewMember, anime_id: anime.id };
+          return crewAxiosInstance.post("", {
+            data: crewData,
+            anime_id: anime.id,
+          });
+        }),
+
+        ...localPhotos.map((photo) => {
+          return photosAxiosInstance.post("", {
+            data: photo.url,
+            anime_id: anime.id,
+          });
+        }),
+        ...localVideos.map((video) => {
+          const videoData = { ...video, anime_id: anime.id };
+          return videosAxiosInstance.post("", {
+            data: videoData,
+            anime_id: anime.id,
+          });
+        }),
+      ];
+
+      const results = await Promise.all(postPromises);
+      const newCast = results
+        .slice(0, localCast.length)
+        .map((res, index) => ({ ...localCast[index], id: res.data.id }));
+      const newCrew = results
+        .slice(localCast.length, localCast.length + localCrew.length)
+        .map((res, index) => ({ ...localCrew[index], id: res.data.id }));
+
+      onSubmit(animeData, newCast, newCrew, localPhotos, localVideos);
+      navigate("/home");
+    } catch (error) {
+      console.error("Error updating anime:", error);
+    }
+  };
 
   useEffect(() => {
     if (anime) {
@@ -54,13 +144,19 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
       setCoverPhoto(anime.coverPhoto || "");
       setPopularity(anime.popularity || "");
       setReleaseDate(anime.releaseDate || "");
-      setGenres(anime.genres || []);
-      setCast(anime.cast || []);
-      setCrew(anime.crew || []);
-      setPhotos(anime.photos || []);
-      setVideos(anime.videos || []);
+      setGenres(
+        anime.genres
+          ? Array.isArray(anime.genres)
+            ? anime.genres
+            : JSON.parse(anime.genres)
+          : []
+      );
     }
-  }, [anime]);
+    setLocalCast(cast);
+    setLocalCrew(crew);
+    setLocalPhotos(photos);
+    setLocalVideos(videos);
+  }, [anime, cast, crew, photos, videos]);
 
   const handleRemoveItem = (array, setArray, index) => {
     const newArray = [...array];
@@ -69,30 +165,28 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
   };
 
   const handleVideoChange = (index, field, value) => {
-    const newVideos = [...videos];
-    newVideos[index][field] = value;
-    setVideos(newVideos);
+    const newVideos = [...localVideos];
+    newVideos[index] = { ...newVideos[index], [field]: value };
+    setLocalVideos(newVideos);
   };
 
   const handlePhotoChange = (index, value) => {
-    const newPhotos = [...photos];
-    newPhotos[index] = value;
-    setPhotos(newPhotos);
+    const newPhotos = [...localPhotos];
+    newPhotos[index] = { url: value };
+    setLocalPhotos(newPhotos);
   };
 
   const handleCastChange = (index, field, value) => {
-    const newCast = [...cast];
-    newCast[index][field] = value;
-    setCast(newCast);
+    const newCast = [...localCast];
+    newCast[index] = { ...newCast[index], [field]: value };
+    setLocalCast(newCast);
   };
 
   const handleCrewChange = (index, field, value) => {
-    const newCrew = [...crew];
-    newCrew[index][field] = value;
-    setCrew(newCrew);
+    const newCrew = [...localCrew];
+    newCrew[index] = { ...newCrew[index], [field]: value };
+    setLocalCrew(newCrew);
   };
-
-  console.log("Cast data:", cast);
 
   return (
     <div className="form-container">
@@ -170,7 +264,7 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
               <input
                 id="genres"
                 type="text"
-                value={genres.join(", ")}
+                value={genres}
                 readOnly
                 className="input-field readonly"
               />
@@ -203,7 +297,7 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
         <div className="form-section">
           <h2>Videos</h2>
           <div className="videos-grid">
-            {videos.map((video, index) => (
+            {localVideos.map((video, index) => (
               <div key={index} className="video-item">
                 {video.key && (
                   <div className="video-frame">
@@ -239,7 +333,9 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
                   />
                   <button
                     type="button"
-                    onClick={() => handleRemoveItem(videos, setVideos, index)}
+                    onClick={() =>
+                      handleRemoveItem(localVideos, setLocalVideos, index)
+                    }
                     className="remove-button"
                   >
                     Remove
@@ -250,7 +346,9 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
           </div>
           <button
             type="button"
-            onClick={() => setVideos([...videos, { name: "", key: "" }])}
+            onClick={() =>
+              setLocalVideos([...localVideos, { name: "", key: "" }])
+            }
             className="add-button"
           >
             Add Video
@@ -260,24 +358,26 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
         <div className="form-section">
           <h2>Photos</h2>
           <div className="photos-grid">
-            {photos.map((photo, index) => (
+            {localPhotos.map((photo, index) => (
               <div key={index} className="photo-item">
                 <img
-                  src={photo}
+                  src={photo.url}
                   alt={`Photo ${index}`}
                   className="photo-preview"
                 />
                 <div className="photo-controls">
                   <input
                     type="url"
-                    value={photo}
+                    value={photo.url}
                     onChange={(e) => handlePhotoChange(index, e.target.value)}
                     className="input-field"
                     placeholder="Enter Photo URL"
                   />
                   <button
                     type="button"
-                    onClick={() => handleRemoveItem(photos, setPhotos, index)}
+                    onClick={() =>
+                      handleRemoveItem(localPhotos, setLocalPhotos, index)
+                    }
                     className="remove-button"
                   >
                     Remove
@@ -288,7 +388,7 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
           </div>
           <button
             type="button"
-            onClick={() => setPhotos([...photos, ""])}
+            onClick={() => setLocalPhotos([...localPhotos, { url: "" }])}
             className="add-button"
           >
             Add Photo
@@ -301,7 +401,7 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
             <div className="cast-section">
               <h3>Cast</h3>
               <div className="cast-grid">
-                {cast.map((castMember, index) => (
+                {localCast.map((castMember, index) => (
                   <div key={index} className="cast-crew-item">
                     <div className="profile-image-container">
                       {castMember.profile_path && (
@@ -346,7 +446,9 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
                       />
                       <button
                         type="button"
-                        onClick={() => handleRemoveItem(cast, setCast, index)}
+                        onClick={() =>
+                          handleRemoveItem(localCast, setLocalCast, index)
+                        }
                         className="remove-button"
                       >
                         Remove
@@ -358,8 +460,8 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
               <button
                 type="button"
                 onClick={() =>
-                  setCast([
-                    ...cast,
+                  setLocalCast([
+                    ...localCast,
                     { name: "", character: "", profile_path: "" },
                   ])
                 }
@@ -372,7 +474,7 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
             <div className="crew-section">
               <h3>Crew</h3>
               <div className="crew-grid">
-                {crew.map((crewMember, index) => (
+                {localCrew.map((crewMember, index) => (
                   <div key={index} className="cast-crew-item">
                     <div className="profile-image-container">
                       {crewMember.profile_path && (
@@ -417,7 +519,9 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
                       />
                       <button
                         type="button"
-                        onClick={() => handleRemoveItem(crew, setCrew, index)}
+                        onClick={() =>
+                          handleRemoveItem(localCrew, setLocalCrew, index)
+                        }
                         className="remove-button"
                       >
                         Remove
@@ -429,7 +533,10 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
               <button
                 type="button"
                 onClick={() =>
-                  setCrew([...crew, { name: "", job: "", profile_path: "" }])
+                  setLocalCrew([
+                    ...localCrew,
+                    { name: "", job: "", profile_path: "" },
+                  ])
                 }
                 className="add-button"
               >
@@ -441,7 +548,7 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
 
         <div className="form-actions">
           <button type="submit" className="submit-button">
-            Add Anime
+            Update Anime
           </button>
           <button type="button" onClick={onCancel} className="cancel-button">
             Cancel
@@ -453,289 +560,68 @@ function AnimeForm({ anime = {}, onSubmit, onCancel }) {
 }
 
 AnimeForm.propTypes = {
-  anime: PropTypes.shape({
-    id: PropTypes.number,
-    tmdb_id: PropTypes.number,
-    title: PropTypes.string,
-    score: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    synopsis: PropTypes.string,
-    coverPhoto: PropTypes.string,
-    popularity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    releaseDate: PropTypes.string,
-    genres: PropTypes.arrayOf(PropTypes.string),
-    cast: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        name: PropTypes.string.isRequired,
-        character: PropTypes.string.isRequired,
-        profile_path: PropTypes.string,
-      })
-    ),
-    crew: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        name: PropTypes.string.isRequired,
-        job: PropTypes.string.isRequired,
-        profile_path: PropTypes.string,
-      })
-    ),
-    photos: PropTypes.arrayOf(PropTypes.string),
-    videos: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-          .isRequired,
-        key: PropTypes.string.isRequired,
-        name: PropTypes.string,
-      })
-    ),
-  }),
+  anime: PropTypes.object,
+  cast: PropTypes.array,
+  crew: PropTypes.array,
+  photos: PropTypes.array,
+  videos: PropTypes.array,
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
 };
 
-export default function AddAnime() {
-  const { addAnime } = useAnime();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [selectedAnime, setSelectedAnime] = useState({});
-  const [extraDetails, setExtraDetails] = useState({
-    cast: [],
-    crew: [],
-    photos: [],
-    videos: [],
-  });
-
-  console.log(extraDetails);
-
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+export default function UpdateAnime() {
+  const { animeList, animeCasts, animeCrews, animePhotos, animeVideos } =
+    useAnime();
+  const { id } = useParams();
   const navigate = useNavigate();
+  const [anime, setAnime] = useState(null);
+  const [cast, setCast] = useState([]);
+  const [crew, setCrew] = useState([]);
+  const [photos, setPhotos] = useState([]);
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  async function handleSearch(pageNumber = 1) {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await axios.get(TMDB_SEARCH_URL, {
-        params: {
-          api_key: TMDB_API_KEY,
-          query: searchQuery,
-          page: pageNumber,
-        },
-      });
-      setSearchResults(response.data.results);
-      setTotalPages(response.data.total_pages);
-      setPage(pageNumber);
-    } catch (err) {
-      setError(err.message || "Failed to search anime");
-      setSearchResults([]);
-      setTotalPages(1);
-      setPage(1);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  useEffect(() => {
+    const numericId = parseInt(id);
 
-  const fetchAllCastAndCrew = async (animeId) => {
-    let allCast = [];
-    let allCrew = [];
-    let page = 1;
-    let totalPages = 1;
-    do {
-      try {
-        const response = await axios.get(
-          `${TMDB_BASE_URL}/tv/${animeId}/credits`,
-          {
-            params: { api_key: TMDB_API_KEY, page },
-          }
-        );
-        allCast = allCast.concat(response.data.cast);
-        totalPages = response.data.total_pages;
-        page++;
-      } catch (err) {
-        console.error("Failed to fetch cast:", err);
-        break;
+    if (animeList.length > 0) {
+      const foundAnime = animeList.find((anime) => anime.id === numericId);
+      if (foundAnime) {
+        setAnime(foundAnime);
+        setCast(animeCasts[numericId] || []);
+        setCrew(animeCrews[numericId] || []);
+        setPhotos(animePhotos[numericId] || []);
+        setVideos(animeVideos[numericId] || []);
+      } else {
+        setError("Anime not found in context.");
       }
-    } while (page <= totalPages);
-
-    page = 1;
-    totalPages = 1;
-
-    do {
-      try {
-        const response = await axios.get(
-          `${TMDB_BASE_URL}/tv/${animeId}/credits`,
-          {
-            params: { api_key: TMDB_API_KEY, page },
-          }
-        );
-        allCrew = allCrew.concat(response.data.crew);
-        totalPages = response.data.total_pages;
-        page++;
-      } catch (err) {
-        console.error("Failed to fetch crew:", err);
-        break;
-      }
-    } while (page <= totalPages);
-
-    return { cast: allCast, crew: allCrew };
-  };
-
-  async function fetchAdditionalDetails(animeId) {
-    try {
-      const [imagesResponse, videosResponse, detailsResponse, castAndCrew] =
-        await Promise.all([
-          axios.get(`${TMDB_BASE_URL}/tv/${animeId}/images`, {
-            params: { api_key: TMDB_API_KEY },
-          }),
-          axios.get(`${TMDB_BASE_URL}/tv/${animeId}/videos`, {
-            params: { api_key: TMDB_API_KEY },
-          }),
-          axios.get(`${TMDB_BASE_URL}/tv/${animeId}`, {
-            params: { api_key: TMDB_API_KEY },
-          }),
-          fetchAllCastAndCrew(animeId),
-        ]);
-
-      const genres = detailsResponse.data.genres.map((genre) => genre.name);
-
-      setExtraDetails({
-        cast: castAndCrew.cast,
-        crew: castAndCrew.crew,
-        photos: imagesResponse.data.backdrops.slice(0, 10),
-        videos: videosResponse.data.results.slice(0, 5),
-      });
-
-      setSelectedAnime((prev) => ({
-        ...prev,
-        genres,
-        tmdb_id: animeId,
-        cast: castAndCrew.cast || [], 
-        crew: castAndCrew.crew || [],
-        photos: imagesResponse.data.backdrops
-          .map(
-            (photo) => `https://image.tmdb.org/t/p/original${photo.file_path}`
-          )
-          .slice(0, 10) || [],
-        videos: videosResponse.data.results.map((video) => video).slice(0, 5) || [],
-      }));
-    } catch (err) {
-      console.error("Failed to fetch additional details:", err);
+      setLoading(false);
     }
-  }
+  }, [id, animeList, animeCasts, animeCrews, animePhotos, animeVideos]);
 
-  async function handleSelectAnime(tmdbAnime) {
-    const animeData = {
-      id: tmdbAnime.id,
-      tmdb_id: tmdbAnime.id,
-      title: tmdbAnime.name,
-      score: tmdbAnime.vote_average,
-      synopsis: tmdbAnime.overview,
-      coverPhoto: `https://image.tmdb.org/t/p/original${tmdbAnime.poster_path}`,
-      popularity: tmdbAnime.popularity,
-      releaseDate: tmdbAnime.first_air_date,
-    };
-    setSelectedAnime(animeData);
-    await fetchAdditionalDetails(tmdbAnime.id);
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!anime) return <div>Anime not found.</div>;
 
-  async function handleFormSubmit(animeData) {
+  const handleFormSubmit = async () => {
     try {
-      await addAnime(animeData);
       navigate("/home");
     } catch (error) {
-      console.error("Error adding anime:", error);
+      console.error("Error updating anime:", error);
+      setError("Failed to update anime. Please try again later.");
     }
-  }
-
-  async function handlePageChange(newPage) {
-    if (newPage >= 1 && newPage <= totalPages) {
-      handleSearch(newPage);
-    }
-  }
-
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  };
 
   return (
-    <div className="add-anime-container">
-      <h1>Add Anime</h1>
-      <div className="search-bar">
-        <input
-          type="text"
-          placeholder="Search Anime..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <button onClick={() => handleSearch(1)} className="bg-blue">
-          Search
-        </button>
-      </div>
-
-      {searchResults.length > 0 && (
-        <div className="search-results">
-          <h2>Search Results</h2>
-          <div className="search-results-grid">
-            {searchResults.map((result) => (
-              <div key={result.id} className="search-result-card">
-                <div className="search-result-image">
-                  <img
-                    src={
-                      result.poster_path
-                        ? `https://image.tmdb.org/t/p/original${result.poster_path}`
-                        : "https://via.placeholder.com/200x300?text=No+Poster"
-                    }
-                    alt={result.name}
-                  />
-                </div>
-                <div className="search-result-details">
-                  <div className="search-result-content">
-                    <h3>{result.name}</h3>
-                    <p className="date">
-                      {result.first_air_date ? result.first_air_date : "N/A"}
-                    </p>
-                    <p className="rating">Rating: {result.vote_average}</p>
-                    <p className="overview">
-                      {result.overview
-                        ? `${result.overview.substring(0, 100)}...`
-                        : "No overview available."}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleSelectAnime(result)}
-                    className="bg-green add-anime-shared-button"
-                  >
-                    Select
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="pagination">
-            <button
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page <= 1}
-              className="bg-blue"
-            >
-              Previous
-            </button>
-            <span>
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page >= totalPages}
-              className="bg-blue"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
-
+    <div className="update-anime-container">
+      <h1>Update Anime</h1>
       <AnimeForm
-        anime={selectedAnime}
+        anime={anime}
+        cast={cast}
+        crew={crew}
+        photos={photos}
+        videos={videos}
         onSubmit={handleFormSubmit}
         onCancel={() => navigate("/home")}
       />

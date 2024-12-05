@@ -45,7 +45,7 @@ const HeroSlider = ({ animes }) => {
 
         const intervalId = setInterval(() => {
             handleNext();
-        }, 1000);
+        }, 6000);
 
         return () => clearInterval(intervalId);
     }, [currentIndex, isAutoPlaying, handleNext]);

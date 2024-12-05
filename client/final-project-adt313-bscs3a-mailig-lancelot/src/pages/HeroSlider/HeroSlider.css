@@ -269,7 +269,7 @@
     color: #666;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
     .hero-slider {
         flex-direction: column;
     }
