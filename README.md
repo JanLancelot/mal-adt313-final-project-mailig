@@ -1,5 +1,4 @@
-# Jan Lancelot P. Mailig
-# BSCS-3A
+# Jan Lancelot P. Mailig || BSCS-3A
 
 API Endpoints
 
