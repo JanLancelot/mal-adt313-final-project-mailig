@@ -124,223 +124,7 @@ AnimeCard.propTypes = {
   isAdmin: PropTypes.bool.isRequired,
 };
 
-const AnimeForm = ({ anime, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState(() => ({
-    id: anime ? anime.id : null,
-    tmdb_id: anime ? anime.tmdb_id : "",
-    title: anime ? anime.title : "",
-    score: anime ? anime.score : "",
-    synopsis: anime ? anime.synopsis : "",
-    coverPhoto: anime ? anime.coverPhoto : "",
-    popularity: anime ? anime.popularity : "",
-    releaseDate: anime ? anime.releaseDate : "",
-    genres: anime && anime.genres ? JSON.parse(anime.genres) : [],
-  }));
-  const [newGenre, setNewGenre] = useState("");
-
-  const handleInputChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }, []);
-
-  const handleSubmit = useCallback(
-    async (e) => {
-      e.preventDefault();
-
-      const url = "http://localhost/mal-project/anime_operations.php";
-      const method = anime ? "PUT" : "POST";
-
-      try {
-        const response = await fetch(url, {
-          method: method,
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...formData,
-            score: parseFloat(formData.score),
-            popularity: parseFloat(formData.popularity),
-          }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          onSubmit(data);
-        } else {
-          console.error("Error:", data.message);
-          alert(data.message);
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        alert("An error occurred while saving the anime");
-      }
-    },
-    [formData, onSubmit, anime]
-  );
-
-  const addGenre = useCallback(() => {
-    if (newGenre && !formData.genres.includes(newGenre)) {
-      setFormData((prev) => ({
-        ...prev,
-        genres: [...prev.genres, newGenre],
-      }));
-      setNewGenre("");
-    }
-  }, [newGenre, formData.genres]);
-
-  const removeGenre = useCallback((genreToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      genres: prev.genres.filter((genre) => genre !== genreToRemove),
-    }));
-  }, []);
-
-  console.log(formData);
-
-  return (
-    <form onSubmit={handleSubmit} className="anime-form">
-      <div className="form-group">
-        <label htmlFor="title">Title</label>
-        <input
-          id="title"
-          name="title"
-          type="text"
-          value={formData.title}
-          onChange={handleInputChange}
-          required
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="score">Score</label>
-        <input
-          id="score"
-          name="score"
-          type="number"
-          step="0.1"
-          min="0"
-          max="10"
-          value={formData.score}
-          onChange={handleInputChange}
-          required
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="synopsis">Synopsis</label>
-        <textarea
-          id="synopsis"
-          name="synopsis"
-          value={formData.synopsis}
-          onChange={handleInputChange}
-          required
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="coverPhoto">Cover Photo URL</label>
-        <input
-          id="coverPhoto"
-          name="coverPhoto"
-          type="url"
-          value={formData.coverPhoto}
-          onChange={handleInputChange}
-          required
-        />
-        {formData.coverPhoto && (
-          <div className="cover-preview">
-            <img
-              src={formData.coverPhoto}
-              alt="Cover Preview"
-              style={{ maxWidth: "200px", marginTop: "10px" }}
-              loading="lazy"
-            />
-          </div>
-        )}
-      </div>
-      <div className="form-group">
-        <label htmlFor="popularity">Popularity</label>
-        <input
-          id="popularity"
-          name="popularity"
-          type="number"
-          value={formData.popularity}
-          onChange={handleInputChange}
-          required
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="releaseDate">Release Date</label>
-        <input
-          id="releaseDate"
-          name="releaseDate"
-          type="date"
-          value={formData.releaseDate}
-          onChange={handleInputChange}
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="genres">Genres</label>
-        <div className="genres-input-container">
-          <input
-            type="text"
-            value={newGenre}
-            onChange={(e) => setNewGenre(e.target.value)}
-            placeholder="Add genre"
-          />
-          <button type="button" onClick={addGenre} className="add-genre-button">
-            +
-          </button>
-        </div>
-        <div className="genres-container">
-          {formData.genres.map((genre, index) => (
-            <div key={index} className="genre-item">
-              {genre}
-              <button
-                type="button"
-                onClick={() => removeGenre(genre)}
-                className="remove-genre-button"
-              >
-                x
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="button-group">
-        <button type="submit" className="bg-blue">
-          {anime ? "Update" : "Add"} Anime
-        </button>
-        <button type="button" onClick={onCancel} className="bg-gray">
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
-};
-
-AnimeForm.propTypes = {
-  anime: PropTypes.shape({
-    id: PropTypes.number,
-    tmdb_id: PropTypes.number,
-    title: PropTypes.string,
-    score: PropTypes.number,
-    synopsis: PropTypes.string,
-    coverPhoto: PropTypes.string,
-    popularity: PropTypes.number,
-    releaseDate: PropTypes.string,
-    genres: PropTypes.any,
-  }),
-  onSubmit: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired,
-};
-
-const Home = () => {
-  const [editingAnime, setEditingAnime] = useState(null);
+export default function Home () {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterScore, setFilterScore] = useState("");
   const [sortBy, setSortBy] = useState("");
@@ -360,7 +144,6 @@ const Home = () => {
     availableGenres,
     topAnime,
     deleteAnime,
-    addAnime,
     fetchAnime,
   } = useAnime();
 
@@ -449,22 +232,6 @@ const Home = () => {
     return filteredAndSearchedAnimeList;
   }, [animeList, searchQuery, filterScore, sortBy, filterGenre]);
 
-  const handleAddNewAnime = useCallback(
-    async (newAnime) => {
-      try {
-        await addAnime(newAnime);
-        setEditingAnime(null);
-      } catch (err) {
-        console.error("Failed to add new anime", err);
-      }
-    },
-    [addAnime]
-  );
-
-  const handleCancelAdd = useCallback(() => {
-    setEditingAnime(null);
-  }, []);
-
   const navToAddAnime = useCallback(() => {
     navigate("/add-anime");
   }, [navigate]);
@@ -535,19 +302,6 @@ const Home = () => {
             </select>
           </div>
 
-          {editingAnime && (
-            <div className="edit-form-overlay">
-              <div className="edit-form-container">
-                <h2>{editingAnime.id ? "Edit Anime" : "Add New Anime"}</h2>
-                <AnimeForm
-                  anime={editingAnime}
-                  onSubmit={editingAnime.id ? handleUpdate : handleAddNewAnime}
-                  onCancel={handleCancelAdd}
-                />
-              </div>
-            </div>
-          )}
-
           <div className="anime-grid">
             {sortedAnimeList.map((anime) => (
               <AnimeCard
@@ -564,5 +318,3 @@ const Home = () => {
     </div>
   );
 };
-
-export default Home;

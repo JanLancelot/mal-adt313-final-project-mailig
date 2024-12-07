@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 import './Navbar.css';
 
@@ -12,23 +11,23 @@ export default function Navbar() {
     return (
         <nav className="navbar">
             <div className="navbar-container">
-                <Link to="/home" className="navbar-brand">
+                <a href="/home" className="navbar-brand">
                     AniList
-                </Link>
+                </a>
                 <div className="navbar-links">
                     {user ? (
                         <>
-                            <Link to="/user-profile" className="user-profile-link">
+                            <a href="/user-profile" className="user-profile-link">
                                 <div className="profile-icon">
                                     {getInitials(user.username)}
                                 </div>
                                 <span className="navbar-username">{user.username}</span>
-                            </Link>
+                            </a>
                             <button onClick={logout} className="logout-button">Logout</button>
                         </>
                     ) : (
                         <>
-                            <Link to="/" className="navbar-link">Login</Link>
+                            <a href="/" className="navbar-link">Login</a>
                         </>
                     )}
                 </div>

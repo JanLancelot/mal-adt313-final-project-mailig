@@ -21,8 +21,12 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
   const [crew, setCrew] = useState(anime.crew || []);
   const [photos, setPhotos] = useState(anime.photos || []);
   const [videos, setVideos] = useState(anime.videos || []);
-  const [numberOfEpisodes, setNumberOfEpisodes] = useState(anime.number_of_episodes || "");
-  const [numberOfSeasons, setNumberOfSeasons] = useState(anime.number_of_seasons || "");
+  const [numberOfEpisodes, setNumberOfEpisodes] = useState(
+    anime.number_of_episodes || ""
+  );
+  const [numberOfSeasons, setNumberOfSeasons] = useState(
+    anime.number_of_seasons || ""
+  );
   const [status, setStatus] = useState(anime.status || "");
 
   function handleSubmit(e) {
@@ -44,7 +48,7 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
       videos: JSON.stringify(videos),
       number_of_episodes: parseInt(numberOfEpisodes, 10) || 0,
       number_of_seasons: parseInt(numberOfSeasons, 10) || 0,
-      status
+      status,
     });
   }
 
@@ -231,7 +235,6 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
               </div>
             )}
           </div>
-
         </div>
 
         <div className="form-section">
@@ -340,7 +343,11 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
                     <div className="profile-image-container">
                       {castMember.profile_path && (
                         <img
-                          src={`https://image.tmdb.org/t/p/original${castMember.profile_path}`}
+                          src={
+                            castMember.profile_path.startsWith("http")
+                              ? castMember.profile_path
+                              : `https://image.tmdb.org/t/p/original${castMember.profile_path}`
+                          }
                           alt={castMember.name}
                           className="profile-image"
                         />
@@ -411,7 +418,11 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
                     <div className="profile-image-container">
                       {crewMember.profile_path && (
                         <img
-                          src={`https://image.tmdb.org/t/p/original${crewMember.profile_path}`}
+                          src={
+                            crewMember.profile_path.startsWith("http")
+                              ? crewMember.profile_path
+                              : `https://image.tmdb.org/t/p/original${crewMember.profile_path}`
+                          }
                           alt={crewMember.name}
                           className="profile-image"
                         />
@@ -560,8 +571,6 @@ export default function AddAnime() {
     return { cast: allCast, crew: allCrew };
   };
 
-
-
   async function fetchAdditionalDetails(animeId) {
     try {
       const [imagesResponse, videosResponse, detailsResponse, castAndCrew] =
@@ -593,12 +602,14 @@ export default function AddAnime() {
         tmdb_id: animeId,
         cast: castAndCrew.cast || [],
         crew: castAndCrew.crew || [],
-        photos: imagesResponse.data.backdrops
-          .map(
-            (photo) => `https://image.tmdb.org/t/p/original${photo.file_path}`
-          )
-          .slice(0, 10) || [],
-        videos: videosResponse.data.results.map((video) => video).slice(0, 5) || [],
+        photos:
+          imagesResponse.data.backdrops
+            .map(
+              (photo) => `https://image.tmdb.org/t/p/original${photo.file_path}`
+            )
+            .slice(0, 10) || [],
+        videos:
+          videosResponse.data.results.map((video) => video).slice(0, 5) || [],
         number_of_episodes: detailsResponse.data.number_of_episodes,
         number_of_seasons: detailsResponse.data.number_of_seasons,
         status: detailsResponse.data.status,

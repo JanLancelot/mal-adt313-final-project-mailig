@@ -42,6 +42,35 @@
     color: #fff;
     font-size: 1rem;
     white-space: nowrap;
+    transition: color 0.3s ease;
+}
+
+.user-profile-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    gap: 8px;
+}
+
+.user-profile-link:hover .navbar-username {
+    color: #4a90e2;
+}
+
+.user-profile-link:hover .profile-icon {
+    background-color: #357abd;
+}
+
+.profile-icon {
+    background-color: #4a90e2;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
 }
 
 .logout-button {
@@ -75,6 +104,12 @@
     
     .logout-button {
         padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
+    
+    .profile-icon {
+        width: 28px;
+        height: 28px;
         font-size: 0.9rem;
     }
 }

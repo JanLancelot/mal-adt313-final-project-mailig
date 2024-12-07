@@ -5,6 +5,8 @@ import "./UpdateAnime.css";
 import { useAnime } from "../../AnimeContext";
 import axios from "axios";
 
+import { useAuth } from "../../AuthContext";
+
 const API_BASE_URL = "http://localhost/mal-project/";
 
 const animeAxiosInstance = axios.create({
@@ -56,6 +58,17 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
   const [localPhotos, setLocalPhotos] = useState(photos);
   const [localVideos, setLocalVideos] = useState(videos);
   const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  useEffect(() => {
+    const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+    animeAxiosInstance.defaults.headers.common = authHeader;
+    castAxiosInstance.defaults.headers.common = authHeader;
+    crewAxiosInstance.defaults.headers.common = authHeader;
+    photosAxiosInstance.defaults.headers.common = authHeader;
+    videosAxiosInstance.defaults.headers.common = authHeader;
+  }, [token]);
 
   console.log("Genres: ", typeof genres);
 
@@ -454,9 +467,13 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
                 {localCast.map((castMember, index) => (
                   <div key={index} className="cast-crew-item">
                     <div className="profile-image-container">
-                      {castMember.profile_path && (
+                    {castMember.profile_path && (
                         <img
-                          src={`https://image.tmdb.org/t/p/original${castMember.profile_path}`}
+                          src={
+                            castMember.profile_path.startsWith("http")
+                              ? castMember.profile_path
+                              : `https://image.tmdb.org/t/p/original${castMember.profile_path}`
+                          }
                           alt={castMember.name}
                           className="profile-image"
                         />
@@ -529,7 +546,11 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
                     <div className="profile-image-container">
                       {crewMember.profile_path && (
                         <img
-                          src={`https://image.tmdb.org/t/p/original${crewMember.profile_path}`}
+                          src={
+                            crewMember.profile_path.startsWith("http")
+                              ? crewMember.profile_path
+                              : `https://image.tmdb.org/t/p/original${crewMember.profile_path}`
+                          }
                           alt={crewMember.name}
                           className="profile-image"
                         />

@@ -415,13 +415,13 @@ export default function AnimeDetails() {
                         <div className="cast-image-container">
                           {person.profile_path ? (
                             <img
-                              src={`https://image.tmdb.org/t/p/w200${person.profile_path}`}
+                              src={
+                                person.profile_path.startsWith("http")
+                                  ? person.profile_path
+                                  : `https://image.tmdb.org/t/p/original${person.profile_path}`
+                              }
                               alt={person.name}
                               className="cast-image"
-                              // onError={(e) => {
-                              //   e.target.onerror = null;
-                              //   e.target.src = "/path/to/default/image.jpg";
-                              // }}
                             />
                           ) : (
                             <span className="initials-circle">
@@ -447,13 +447,13 @@ export default function AnimeDetails() {
                         <div className="cast-image-container">
                           {person.profile_path ? (
                             <img
-                              src={`https://image.tmdb.org/t/p/w200${person.profile_path}`}
+                              src={
+                                person.profile_path.startsWith("http")
+                                  ? person.profile_path
+                                  : `https://image.tmdb.org/t/p/original${person.profile_path}`
+                              }
                               alt={person.name}
                               className="cast-image"
-                              // onError={(e) => {
-                              //   e.target.onerror = null;
-                              //   e.target.src = "/path/to/default/image.jpg";
-                              // }}
                             />
                           ) : (
                             <span className="initials-circle">

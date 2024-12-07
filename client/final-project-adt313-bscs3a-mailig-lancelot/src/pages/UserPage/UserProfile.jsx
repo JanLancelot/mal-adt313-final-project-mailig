@@ -11,10 +11,10 @@ export default function UserProfile() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (user && !loadingReviews && reviews.length === 0) {
+        if (user) {
             fetchReviews(user.id);
         }
-    }, [user, loadingReviews, reviews.length, fetchReviews]);
+    }, [user, reviews.length, fetchReviews]);
 
     const favoriteAnimeDetails = useMemo(() => {
         return favorites.map(animeId => animeList.find(anime => anime.id === animeId)).filter(Boolean);
@@ -30,7 +30,7 @@ export default function UserProfile() {
     return (
         <div className="user-page-container">
             <h1>{user.username} Profile</h1>
-            <h2>Favorites</h2>
+            <h2 className='h2-border'>Favorites</h2>
             <div className="favorites-list">
                 {favoriteAnimeDetails.length === 0 ? (
                     <p>No favorites added yet.</p>
@@ -42,7 +42,7 @@ export default function UserProfile() {
                     </div>
                 )}
             </div>
-            <h2>Reviews</h2>
+            <h2 className='h2-border'>Reviews</h2>
             <div className="reviews-list">
                 {reviews.length === 0 ? (
                     <p>No reviews yet.</p>
