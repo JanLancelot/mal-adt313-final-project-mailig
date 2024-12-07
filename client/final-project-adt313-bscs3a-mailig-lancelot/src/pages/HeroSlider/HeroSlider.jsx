@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { useAnime } from "../../AnimeContext";
 
-export default function HeroSlider ({ animes }) {
+export default function HeroSlider({ animes }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -126,7 +126,6 @@ export default function HeroSlider ({ animes }) {
             >
               View Details
             </button>
-            {/* <button className="cta-button add-list">Add to List</button> */}
           </div>
         </div>
 
@@ -144,7 +143,7 @@ export default function HeroSlider ({ animes }) {
       </div>
     </div>
   );
-};
+}
 
 HeroSlider.propTypes = {
   animes: PropTypes.arrayOf(
@@ -159,4 +158,3 @@ HeroSlider.propTypes = {
     })
   ).isRequired,
 };
-

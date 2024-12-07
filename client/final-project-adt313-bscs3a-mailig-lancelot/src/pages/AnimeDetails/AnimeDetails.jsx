@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./AnimeDetails.css";
 import { useAnime } from "../../AnimeContext";
@@ -7,8 +7,6 @@ import { FaStar as SolidStar } from "react-icons/fa";
 import { FaRegStar as RegularStar } from "react-icons/fa";
 import { AiFillStar as FilledStar } from "react-icons/ai";
 import { AiOutlineStar as OutlineStar } from "react-icons/ai";
-
-const API_BASE_URL = "http://localhost/mal-project";
 
 function getInitials(name) {
   if (!name) return "";
@@ -19,70 +17,43 @@ function getInitials(name) {
   return nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0);
 }
 
+const API_BASE_URL = "http://localhost/mal-project";
+
 export default function AnimeDetails() {
   const { animeId } = useParams();
   const [localAnimeDetails, setLocalAnimeDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userRating, setUserRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [reviewText, setReviewText] = useState("");
-  const [allReviews, setAllReviews] = useState([]);
   const navigate = useNavigate();
   const { animeList, animeCasts, animeCrews, animePhotos, animeVideos } =
     useAnime();
-  const { user, favorites, loadingFavorites, updateFavorites } = useAuth();
+  const {
+    user,
+    favorites,
+    loadingFavorites,
+    updateFavorites,
+    ratings,
+    loadingRatings,
+    fetchRatingForAnime,
+    updateRating,
+    addOrUpdateReview,
+    token,
+  } = useAuth();
+
+  const [animeReviews, setAnimeReviews] = useState([]);
+  const [loadingAnimeReviews, setLoadingAnimeReviews] = useState(false);
 
   const isFavorite = useMemo(
     () => favorites && favorites.includes(parseInt(animeId)),
     [favorites, animeId]
   );
 
-  const parsedLocalVideos = useMemo(() => {
-    try {
-      return localAnimeDetails && localAnimeDetails.videos
-        ? JSON.parse(localAnimeDetails.videos)
-        : [];
-    } catch (e) {
-      console.error("Error parsing localVideos:", e);
-      return [];
-    }
-  }, [localAnimeDetails]);
+  const userRating = useMemo(() => {
+    return ratings[animeId];
+  }, [ratings, animeId]);
 
-  console.log(parsedLocalVideos);
-
-  // const parsedLocalCast = useMemo(() => {
-  //   try {
-  //     return localAnimeDetails && localAnimeDetails.cast
-  //       ? JSON.parse(localAnimeDetails.cast)
-  //       : [];
-  //   } catch (e) {
-  //     console.error("Error parsing localCast:", e);
-  //     return [];
-  //   }
-  // }, [localAnimeDetails]);
-
-  // const parsedLocalCrew = useMemo(() => {
-  //   try {
-  //     return localAnimeDetails && localAnimeDetails.crew
-  //       ? JSON.parse(localAnimeDetails.crew)
-  //       : [];
-  //   } catch (e) {
-  //     console.error("Error parsing localCrew:", e);
-  //     return [];
-  //   }
-  // }, [localAnimeDetails]);
-
-  // const parsedLocalPhotos = useMemo(() => {
-  //   try {
-  //     return localAnimeDetails && localAnimeDetails.photos
-  //       ? JSON.parse(localAnimeDetails.photos)
-  //       : [];
-  //   } catch (e) {
-  //     console.error("Error parsing localPhotos:", e);
-  //     return [];
-  //   }
-  // }, [localAnimeDetails]);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
 
   const genres = useMemo(() => {
     try {
@@ -96,61 +67,65 @@ export default function AnimeDetails() {
   }, [localAnimeDetails]);
 
   useEffect(() => {
-    if (animeList.length > 0) {
+    const fetchAnimeDetails = async () => {
       setLoading(true);
       setError(null);
+
       const foundAnime = animeList.find(
         (anime) => anime.id === parseInt(animeId)
       );
 
       if (foundAnime) {
         setLocalAnimeDetails(foundAnime);
-        if (user) {
-          fetchUserRating();
-          fetchAllReviews();
-        }
       } else {
-        setError("Anime not found.");
+        setError("Anime not found in the list.");
       }
+
       setLoading(false);
-    }
-  }, [animeId, animeList, user]);
+    };
 
-  const fetchUserRating = async () => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/get_user_rating.php?userId=${user.id}&animeId=${animeId}`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      if (data && data.rating !== null) {
-        setUserRating(parseInt(data.rating, 10));
-      }
-    } catch (error) {
-      console.error("Error fetching user rating:", error);
-    }
-  };
+    fetchAnimeDetails();
+  }, [animeId, animeList]);
 
-  const fetchAllReviews = async () => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/get_user_review.php?animeId=${animeId}`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+  const fetchReviewsForAnime = useCallback(
+    async (animeId) => {
+      setLoadingAnimeReviews(true);
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/anime_reviews_operations.php?animeId=${animeId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data && data.reviews) {
+          setAnimeReviews(data.reviews);
+        } else {
+          setAnimeReviews([]);
+        }
+      } catch (error) {
+        console.error("Error fetching reviews for anime:", error);
+        setAnimeReviews([]);
+      } finally {
+        setLoadingAnimeReviews(false);
       }
-      const data = await response.json();
-      if (data && data.reviews) {
-        setAllReviews(data.reviews);
-      }
-    } catch (error) {
-      console.error("Error fetching all reviews:", error);
-    }
-  };
+    },
+    [token]
+  );
 
-  const handleToggleFavorite = async () => {
+  useEffect(() => {
+    if (user && animeId) {
+      fetchRatingForAnime(user.id, animeId);
+      fetchReviewsForAnime(animeId);
+    }
+  }, [user, animeId, fetchRatingForAnime, fetchReviewsForAnime]);
+
+  const handleToggleFavorite = useCallback(async () => {
     if (!user) {
       navigate("/login");
       return;
@@ -160,76 +135,56 @@ export default function AnimeDetails() {
       parseInt(animeId),
       isFavorite ? "remove" : "add"
     );
-  };
+  }, [user, animeId, isFavorite, updateFavorites, navigate]);
 
   const handleRatingHover = (rating) => {
     setHoverRating(rating);
   };
 
-  const handleRatingClick = async (rating) => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/update_user_rating.php`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          animeId: animeId,
-          rating: rating,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+  const handleRatingClick = useCallback(
+    async (rating) => {
+      if (!user) {
+        navigate("/login");
+        return;
       }
-      setUserRating(rating);
-    } catch (error) {
-      console.error("Error updating rating:", error);
-    }
-  };
+      await updateRating(user.id, animeId, rating);
+    },
+    [user, animeId, updateRating, navigate]
+  );
 
   const handleReviewChange = (event) => {
     setReviewText(event.target.value);
   };
 
-  const handleSubmitReview = async () => {
+  const handleSubmitReview = useCallback(async () => {
     if (!user) {
       navigate("/login");
       return;
     }
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/update_user_review.php`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          animeId: animeId,
-          reviewText: reviewText,
-        }),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      fetchAllReviews();
-      setReviewText("");
-    } catch (error) {
-      console.error("Error submitting review:", error);
-    }
-  };
+    await addOrUpdateReview(user.id, animeId, reviewText);
+    setReviewText("");
+    fetchReviewsForAnime(animeId);
+  }, [
+    user,
+    animeId,
+    reviewText,
+    addOrUpdateReview,
+    navigate,
+    fetchReviewsForAnime,
+  ]);
 
-  if (loading || loadingFavorites)
+  if (loading || loadingFavorites || loadingRatings || loadingAnimeReviews) {
     return <div className="loading">Loading...</div>;
-  if (error) return <div className="error">{error}</div>;
-  if (!localAnimeDetails) return <div className="error">Anime not found.</div>;
+  }
+
+  if (error) {
+    return <div className="error">{error}</div>;
+  }
+
+  if (!localAnimeDetails) {
+    return <div className="error">Anime not found.</div>;
+  }
 
   const {
     title,
@@ -247,20 +202,6 @@ export default function AnimeDetails() {
   const crew = animeCrews[animeId] || [];
   const photos = animePhotos[animeId] || [];
   const videos = animeVideos[animeId] || [];
-
-  // Lagyan mamaya ng useMemo
-  // const genresArray =
-  //   (() => {
-  //     try {
-  //       return localAnimeDetails && localAnimeDetails.genres
-  //         ? JSON.parse(localAnimeDetails.genres)
-  //         : [];
-  //     } catch (e) {
-  //       console.error("Error parsing genres:", e);
-  //       return [];
-  //     }
-  //   },
-  //   [localAnimeDetails]);
 
   return (
     <div className="anime-details-container">
@@ -320,19 +261,16 @@ export default function AnimeDetails() {
               </span>
             </p>
           )}
-
           {genres.length > 0 && (
             <p>
               Genres: <span className="highlight">{genres.join(", ")}</span>
             </p>
           )}
-
           {popularity && (
             <p>
               Popularity: <span className="highlight">{popularity}</span>
             </p>
           )}
-
           <p>
             Status: <span className="highlight">{status}</span>
           </p>
@@ -405,7 +343,6 @@ export default function AnimeDetails() {
           {(cast.length > 0 || crew.length > 0) && (
             <div className="credits">
               <h2>Credits</h2>
-
               {cast.length > 0 && (
                 <>
                   <h3>Cast</h3>
@@ -476,7 +413,7 @@ export default function AnimeDetails() {
             <div className="review-section">
               <h2>Reviews</h2>
               <div className="all-reviews">
-                {allReviews.map((review) => (
+                {animeReviews.map((review) => (
                   <div key={review.id} className="user-review">
                     <h3>{review.username}</h3>
                     <p>{review.reviewText}</p>
@@ -493,7 +430,12 @@ export default function AnimeDetails() {
                 onChange={handleReviewChange}
                 placeholder="Write your review here..."
               />
-              <button onClick={handleSubmitReview}>Submit Review</button>
+              <button
+                className="submit-review-button"
+                onClick={handleSubmitReview}
+              >
+                Submit Review
+              </button>
             </div>
           )}
         </div>

@@ -4,22 +4,22 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: #f9f9f9;
+  background-color: var(--auth-background);
   padding: 20px;
 }
 
 .auth-title {
   font-size: 24px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   margin-bottom: 20px;
-  color: #333;
+  color: var(--auth-title-color);
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 300px;
+  max-width: var(--auth-form-max-width);
 }
 
 .form-group {
@@ -31,49 +31,51 @@
 .form-group label {
   font-size: 14px;
   margin-bottom: 5px;
-  color: #666;
+  color: var(--auth-label-color);
 }
 
 .form-group input {
   padding: 10px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #fff;
+  border: 1px solid var(--auth-input-border);
+  border-radius: 6px;
+  background-color: var(--auth-input-background);
   transition: border-color 0.2s ease;
 }
 
 .form-group input:focus {
-  border-color: #007bff;
+  border-color: var(--auth-input-focus-border);
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.25);
   outline: none;
 }
 
 .auth-button {
   padding: 10px;
-  font-size: 16px;
-  color: #fff;
-  background-color: #007bff;
+  font-size: var(--font-size-base);
+  color: var(--auth-button-text-color);
+  background-color: var(--auth-button-background);
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s ease;
   margin-top: 10px;
+  font-weight: var(--font-weight-semibold);
 }
 
 .auth-button:hover {
-  background-color: #0056b3;
+  background-color: var(--auth-button-hover-background);
 }
 
 .switch-mode {
   margin-top: 15px;
   font-size: 14px;
-  color: #666;
+  color: var(--auth-label-color);
 }
 
 .switch-link {
   background: none;
   border: none;
-  color: #007bff;
+  color: var(--auth-switch-link-color);
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
@@ -81,11 +83,11 @@
 }
 
 .switch-link:hover {
-  color: #0056b3;
+  color: var(--auth-switch-link-hover-color);
 }
 
 .auth-message {
   margin-top: 15px;
-  color: #e74c3c;
+  color: var(--auth-message-color);
   font-size: 14px;
 }

@@ -36,9 +36,11 @@ export default function Authentication() {
             contactNo,
             role,
           };
-
       const response = await axios.post(url, data);
       setMessage(response.data.message);
+
+      console.log("Data: ", response.data);
+      console.log("Ahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
 
       if (isLogin && response.data.message === "Login successful") {
         login({

@@ -28,6 +28,7 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
     anime.number_of_seasons || ""
   );
   const [status, setStatus] = useState(anime.status || "");
+  const { fetchAnime } = useAnime();
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -50,6 +51,7 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
       number_of_seasons: parseInt(numberOfSeasons, 10) || 0,
       status,
     });
+    fetchAnime();
   }
 
   useEffect(() => {
@@ -69,6 +71,8 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
       setNumberOfSeasons(anime.number_of_seasons || "");
       setStatus(anime.status || "");
     }
+
+    console.log("Infinite rerender test");
   }, [anime]);
 
   const handleRemoveItem = (array, setArray, index) => {
@@ -141,6 +145,7 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
                 id="popularity"
                 type="number"
                 value={popularity}
+                required
                 readOnly
                 className="input-field readonly"
               />
@@ -167,6 +172,7 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
                 type="date"
                 value={releaseDate}
                 readOnly
+                required
                 className="input-field readonly"
               />
             </div>
@@ -177,6 +183,7 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
                 type="text"
                 value={genres.join(", ")}
                 readOnly
+                required
                 className="input-field readonly"
               />
             </div>

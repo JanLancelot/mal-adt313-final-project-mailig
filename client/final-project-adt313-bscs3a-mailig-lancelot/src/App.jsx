@@ -23,24 +23,20 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const location = useLocation();
 
   if (!token) {
-      return <Navigate to="/" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
-
   if (!allowedRoles || allowedRoles.length === 0) {
-      return children;
+    return children;
   }
-
   if (!user || !user.role) {
-      return <Navigate to="/" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
-
   if (!allowedRoles.includes(user.role)) {
-      return <Navigate to="/unauthorized" state={{ from: location }} replace />;
+    return <Navigate to="/unauthorized" state={{ from: location }} replace />;
   }
 
   return children;
 };
-
 
 ProtectedRoute.propTypes = {
   children: PropTypes.node.isRequired,
@@ -49,58 +45,58 @@ ProtectedRoute.propTypes = {
 
 function App() {
   return (
-      <AuthProvider>
-          <AnimeProvider>
-              <Router>
-                  <Navbar />
-                  <Routes>
-                      <Route path="/" element={<Authentication />} />
-                      <Route
-                          path="/home"
-                          element={
-                              <ProtectedRoute>
-                                  <Home />
-                              </ProtectedRoute>
-                          }
-                      />
-                      <Route
-                          path="/add-anime"
-                          element={
-                              <ProtectedRoute allowedRoles={['admin']}>
-                                  <AddAnime />
-                              </ProtectedRoute>
-                          }
-                      />
+    <AuthProvider>
+      <AnimeProvider>
+        <Router>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Authentication />} />
+            <Route
+              path="/home"
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/add-anime"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AddAnime />
+                </ProtectedRoute>
+              }
+            />
 
-                      <Route
-                          path="/update/:id"
-                          element={
-                              <ProtectedRoute allowedRoles={['admin']}>
-                                  <UpdateAnime />
-                              </ProtectedRoute>
-                          }
-                      />
-                      <Route
-                          path="/anime/:animeId"
-                          element={
-                              <ProtectedRoute>
-                                  <AnimeDetails />
-                              </ProtectedRoute>
-                          }
-                      />
-                      <Route
-                          path="/user-profile"
-                          element={
-                              <ProtectedRoute>
-                                  <UserProfile />
-                              </ProtectedRoute>
-                          }
-                      />
-                       <Route path="/unauthorized" element={<Unauthorized />} />
-                  </Routes>
-              </Router>
-          </AnimeProvider>
-      </AuthProvider>
+            <Route
+              path="/update/:id"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <UpdateAnime />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/anime/:animeId"
+              element={
+                <ProtectedRoute>
+                  <AnimeDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/user-profile"
+              element={
+                <ProtectedRoute>
+                  <UserProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+          </Routes>
+        </Router>
+      </AnimeProvider>
+    </AuthProvider>
   );
 }
 

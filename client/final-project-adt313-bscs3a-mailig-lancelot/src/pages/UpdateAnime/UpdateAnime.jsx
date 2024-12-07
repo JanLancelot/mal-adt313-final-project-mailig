@@ -1,38 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import { useNavigate, useParams } from "react-router-dom";
 import "./UpdateAnime.css";
 import { useAnime } from "../../AnimeContext";
+import { useAuth } from "../../AuthContext";
 import axios from "axios";
 
-import { useAuth } from "../../AuthContext";
-
 const API_BASE_URL = "http://localhost/mal-project/";
-
-const animeAxiosInstance = axios.create({
-  baseURL: API_BASE_URL + "anime_operations.php",
-  timeout: 5000,
-});
-
-const castAxiosInstance = axios.create({
-  baseURL: API_BASE_URL + "cast_operations.php",
-  timeout: 5000,
-});
-
-const crewAxiosInstance = axios.create({
-  baseURL: API_BASE_URL + "crew_operations.php",
-  timeout: 5000,
-});
-
-const photosAxiosInstance = axios.create({
-  baseURL: API_BASE_URL + "photos_operations.php",
-  timeout: 5000,
-});
-
-const videosAxiosInstance = axios.create({
-  baseURL: API_BASE_URL + "videos_operations.php",
-  timeout: 5000,
-});
 
 function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
   const [title, setTitle] = useState(anime.title || "");
@@ -57,35 +31,30 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
   const [localCrew, setLocalCrew] = useState(crew);
   const [localPhotos, setLocalPhotos] = useState(photos);
   const [localVideos, setLocalVideos] = useState(videos);
+  const { fetchAnime } = useAnime();
   const navigate = useNavigate();
 
   const { token } = useAuth();
 
-  useEffect(() => {
-    const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
-    animeAxiosInstance.defaults.headers.common = authHeader;
-    castAxiosInstance.defaults.headers.common = authHeader;
-    crewAxiosInstance.defaults.headers.common = authHeader;
-    photosAxiosInstance.defaults.headers.common = authHeader;
-    videosAxiosInstance.defaults.headers.common = authHeader;
+  const api = useMemo(() => {
+    return axios.create({
+      baseURL: API_BASE_URL,
+      timeout: 5000,
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    });
   }, [token]);
 
-  console.log("Genres: ", typeof genres);
-
   const handleDelete = async (endpoint, animeId) => {
-    console.log(
-      `Sending DELETE request to ${endpoint.defaults.baseURL} with anime_id: ${animeId}`
-    );
     try {
-      await endpoint.delete("", { data: { anime_id: animeId } });
+      await api.delete(endpoint, { data: { anime_id: animeId } });
       return true;
     } catch (error) {
-      console.error(`Error deleting from ${endpoint.defaults.baseURL}:`, error);
+      console.error(`Error deleting from ${endpoint}:`, error);
       return false;
     }
   };
-
-  // I moved the update function here sir because of some weird anime_operation.php bug.
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -106,41 +75,41 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
     };
 
     try {
-      await animeAxiosInstance.put("", animeData);
+      await api.put("anime_operations.php", animeData);
 
       const deletePromises = [
-        handleDelete(castAxiosInstance, anime.id),
-        handleDelete(crewAxiosInstance, anime.id),
-        handleDelete(photosAxiosInstance, anime.id),
-        handleDelete(videosAxiosInstance, anime.id),
+        handleDelete("cast_operations.php", anime.id),
+        handleDelete("crew_operations.php", anime.id),
+        handleDelete("photos_operations.php", anime.id),
+        handleDelete("videos_operations.php", anime.id),
       ];
       await Promise.all(deletePromises);
 
       const postPromises = [
         ...localCast.map((castMember) => {
           const castData = { ...castMember, anime_id: anime.id };
-          return castAxiosInstance.post("", {
+          return api.post("cast_operations.php", {
             data: castData,
             anime_id: anime.id,
           });
         }),
         ...localCrew.map((crewMember) => {
           const crewData = { ...crewMember, anime_id: anime.id };
-          return crewAxiosInstance.post("", {
+          return api.post("crew_operations.php", {
             data: crewData,
             anime_id: anime.id,
           });
         }),
 
         ...localPhotos.map((photo) => {
-          return photosAxiosInstance.post("", {
+          return api.post("photos_operations.php", {
             data: photo.url,
             anime_id: anime.id,
           });
         }),
         ...localVideos.map((video) => {
           const videoData = { ...video, anime_id: anime.id };
-          return videosAxiosInstance.post("", {
+          return api.post("videos_operations.php", {
             data: videoData,
             anime_id: anime.id,
           });
@@ -157,6 +126,7 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
 
       onSubmit(animeData, newCast, newCrew, localPhotos, localVideos);
       navigate("/home");
+      fetchAnime();
     } catch (error) {
       console.error("Error updating anime:", error);
     }
@@ -467,7 +437,7 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
                 {localCast.map((castMember, index) => (
                   <div key={index} className="cast-crew-item">
                     <div className="profile-image-container">
-                    {castMember.profile_path && (
+                      {castMember.profile_path && (
                         <img
                           src={
                             castMember.profile_path.startsWith("http")

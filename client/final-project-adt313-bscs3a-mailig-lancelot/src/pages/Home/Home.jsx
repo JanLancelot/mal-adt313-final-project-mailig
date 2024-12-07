@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { useAnime } from "../../AnimeContext";
 import "./Home.css";
 import { useAuth } from "../../AuthContext";
 import HeroSlider from "../HeroSlider/HeroSlider";
+import skelly from "../../assets/dancing_skeleton.gif";
 
 const AnimeCard = React.memo(({ anime, onUpdate, onDelete, isAdmin }) => {
   const navigate = useNavigate();
@@ -124,7 +125,7 @@ AnimeCard.propTypes = {
   isAdmin: PropTypes.bool.isRequired,
 };
 
-export default function Home () {
+export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterScore, setFilterScore] = useState("");
   const [sortBy, setSortBy] = useState("");
@@ -132,7 +133,6 @@ export default function Home () {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = useMemo(() => user && user.role === "admin", [user]);
-  const location = useLocation();
   const {
     animeList,
     animeCasts,
@@ -144,21 +144,7 @@ export default function Home () {
     availableGenres,
     topAnime,
     deleteAnime,
-    fetchAnime,
   } = useAnime();
-
-  useEffect(() => {
-    if (user) {
-      console.log("Test!");
-      fetchAnime();
-    }
-  }, [user, location.pathname]);
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/");
-    }
-  }, [user, navigate]);
 
   const handleUpdate = useCallback(
     (anime) => {
@@ -210,16 +196,22 @@ export default function Home () {
       let genreMatches = true;
       if (filterGenre) {
         try {
-          const animeGenres = typeof anime.genres === 'string' ? JSON.parse(anime.genres) : [];
+          const animeGenres =
+            typeof anime.genres === "string" ? JSON.parse(anime.genres) : [];
           genreMatches = animeGenres.includes(filterGenre);
         } catch (e) {
           console.error("Failed to parse genres for anime", anime, e);
           genreMatches = false;
         }
-    }
+      }
 
       return titleMatches && scoreMatches && genreMatches;
     });
+    console.log(
+      "Filtered Search Anime List Test: ",
+      filteredAndSearchedAnimeList
+    );
+
     if (sortBy === "popularity") {
       return [...filteredAndSearchedAnimeList].sort(
         (a, b) => (b.popularity || 0) - (a.popularity || 0)
@@ -302,19 +294,31 @@ export default function Home () {
             </select>
           </div>
 
-          <div className="anime-grid">
-            {sortedAnimeList.map((anime) => (
-              <AnimeCard
-                key={anime.id}
-                anime={anime}
-                onUpdate={handleUpdate}
-                onDelete={handleDelete}
-                isAdmin={isAdmin}
+          {sortedAnimeList.length === 0 && (
+            <div className="no-results">
+              <img
+                src={skelly}
+                alt="No Results Found"
+                className="no-results-image"
               />
-            ))}
-          </div>
+            </div>
+          )}
+
+          {sortedAnimeList.length > 0 && (
+            <div className="anime-grid">
+              {sortedAnimeList.map((anime) => (
+                <AnimeCard
+                  key={anime.id}
+                  anime={anime}
+                  onUpdate={handleUpdate}
+                  onDelete={handleDelete}
+                  isAdmin={isAdmin}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
-};
+}

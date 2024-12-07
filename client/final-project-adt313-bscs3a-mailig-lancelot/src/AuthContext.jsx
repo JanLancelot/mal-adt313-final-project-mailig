@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useCallback } from "react";
+import { createContext, useState, useEffect, useContext, useMemo } from "react";
 import PropTypes from "prop-types";
 import axios from "axios";
 
@@ -10,237 +10,326 @@ export function AuthProvider({ children }) {
     const storedUser = localStorage.getItem("user");
     return storedUser ? JSON.parse(storedUser) : null;
   });
+
   const [token, setToken] = useState(() => {
     return localStorage.getItem("token") || null;
   });
-  const [favorites, setFavorites] = useState([]);
-  const [loadingFavorites, setLoadingFavorites] = useState(true);
-  const [reviews, setReviews] = useState([]);
-  const [loadingReviews, setLoadingReviews] = useState(true);
-  const [ratings, setRatings] = useState({});
-  const [loadingRatings, setLoadingRatings] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
-      if (token) {
-        localStorage.setItem("token", token);
-      }
-      fetchFavorites(user.id);
-      fetchReviews(user.id);
-      fetchRatings(user.id);
-    } else {
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      setFavorites([]);
-      setReviews([]);
-      setRatings({});
-      setLoadingFavorites(false);
-      setLoadingReviews(false);
-      setLoadingRatings(false);
+  const [state, setState] = useState({
+    favorites: [],
+    reviews: [],
+    ratings: {},
+    loading: {
+      favorites: true,
+      reviews: true,
+      ratings: true,
+    },
+    error: null,
+  });
+
+  const api = useMemo(() => {
+    const instance = axios.create({
+      baseURL: API_BASE_URL,
+      timeout: 5000,
+    });
+
+    if (token) {
+      instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     }
-  }, [user, token]);
 
-  const fetchReviews = useCallback(async (userId) => {
-    setLoadingReviews(true);
-    try {
-      const reviewsResponse = await axios.get(
-        `${API_BASE_URL}/review_operations.php?userId=${userId}`
-      );      
+    return instance;
+  }, [token]);
 
-      console.log("Reviews Response: ", reviewsResponse);
-      setReviews(reviewsResponse.data.reviews || []);
-    } catch (err) {
-      console.error("Error fetching user reviews:", err);
-      setReviews([]);
-    } finally {
-      setLoadingReviews(false);
-    }
-  }, []);
+  const apiOperations = useMemo(
+    () => ({
+      fetchFavorites: async (userId) => {
+        setState((prevState) => ({
+          ...prevState,
+          loading: { ...prevState.loading, favorites: true },
+          error: null,
+        }));
+        try {
+          const response = await api.get(
+            `/favorites_operations.php?userId=${userId}`
+          );
 
-  const fetchFavorites = useCallback(async (userId) => {
-    setLoadingFavorites(true);
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/favorites_operations.php?userId=${userId}`
-      );      
-      if (response.data && response.data.favorites) {
-        const fetchedFavorites = response.data.favorites;
+          if (response.data && response.data.favorites) {
+            const fetchedFavorites = response.data.favorites;
+            const validFavorites = [];
 
-        const validFavorites = [];
-        for (const animeId of fetchedFavorites) {
-          try {
-            const animeResponse = await axios.get(
-              `${API_BASE_URL}/anime_operations.php?id=${animeId}`
-            );
-            if (animeResponse.data && animeResponse.data.length > 0) {
-              validFavorites.push(animeId);
-            } else {
-              await axios.post(`${API_BASE_URL}/favorites_operations.php`, {
-                userId: userId,
-                animeId: animeId,
-                action: "remove",
-              });
+            for (const animeId of fetchedFavorites) {
+              try {
+                const animeResponse = await api.get(
+                  `/anime_operations.php?id=${animeId}`
+                );
+                if (animeResponse.data && animeResponse.data.length > 0) {
+                  validFavorites.push(animeId);
+                } else {
+                  await api.post(`/favorites_operations.php`, {
+                    userId: userId,
+                    animeId: animeId,
+                    action: "remove",
+                  });
+                  console.warn(`Removed invalid favorite animeId: ${animeId}`);
+                }
+              } catch (error) {
+                console.error(`Error checking anime ${animeId}:`, error);
+                setState((prevState) => ({
+                  ...prevState,
+                  error: "Error checking favorite animes",
+                }));
+              }
             }
-          } catch (error) {
-            console.error(`Error checking anime ${animeId}:`, error);
+            setState((prevState) => ({
+              ...prevState,
+              favorites: validFavorites,
+            }));
+          } else {
+            setState((prevState) => ({ ...prevState, favorites: [] }));
           }
+        } catch (error) {
+          console.error("Error fetching favorites:", error);
+          setState((prevState) => ({
+            ...prevState,
+            error: "Error fetching favorites",
+            favorites: [],
+          }));
+        } finally {
+          setState((prevState) => ({
+            ...prevState,
+            loading: { ...prevState.loading, favorites: false },
+          }));
         }
-        setFavorites(validFavorites);
-      } else {
-        setFavorites([]);
-      }
-    } catch (error) {
-      console.error("Error fetching favorites:", error);
-      setFavorites([]);
-    } finally {
-      setLoadingFavorites(false);
-    }
-  }, []);
+      },
 
-  const updateFavorites = useCallback(
-    async (userId, animeId, action) => {
-      try {
-        const response = await axios.post(
-          `${API_BASE_URL}/favorites_operations.php`,
-          {
+      fetchReviews: async (userId) => {
+        setState((prevState) => ({
+          ...prevState,
+          loading: { ...prevState.loading, reviews: true },
+          error: null,
+        }));
+        try {
+          const reviewsResponse = await api.get(
+            `/review_operations.php?userId=${userId}`
+          );
+          setState((prevState) => ({
+            ...prevState,
+            reviews: reviewsResponse.data.reviews || [],
+          }));
+        } catch (error) {
+          console.error("Error fetching user reviews:", error);
+          setState((prevState) => ({
+            ...prevState,
+            error: "Error fetching user reviews",
+            reviews: [],
+          }));
+        } finally {
+          setState((prevState) => ({
+            ...prevState,
+            loading: { ...prevState.loading, reviews: false },
+          }));
+        }
+      },
+
+      updateFavorites: async (userId, animeId, action) => {
+        setState((prevState) => ({ ...prevState, error: null }));
+        try {
+          const response = await api.post(`/favorites_operations.php`, {
             userId,
             animeId: parseInt(animeId),
             action,
-          }
-        );
+          });
 
-        if (response.data.success) {
-          if (action === "add") {
-            setFavorites([...favorites, parseInt(animeId)]);
-          } else if (action === "remove") {
-            setFavorites(
-              favorites.filter((favId) => favId !== parseInt(animeId))
-            );
+          if (response.data.success) {
+            setState((prevState) => ({
+              ...prevState,
+              favorites:
+                action === "add"
+                  ? [...prevState.favorites, parseInt(animeId)]
+                  : prevState.favorites.filter(
+                      (favId) => favId !== parseInt(animeId)
+                    ),
+            }));
+          } else {
+            const errorMessage =
+              response.data.message || "Failed to update favorites.";
+            console.error(errorMessage);
+            setState((prevState) => ({ ...prevState, error: errorMessage }));
           }
-        } else {
-          console.error(response.data.message || "Failed to update favorites.");
+        } catch (error) {
+          console.error("Error updating favorites:", error);
+          setState((prevState) => ({
+            ...prevState,
+            error: "Error updating favorites",
+          }));
         }
-      } catch (error) {
-        console.error("Error updating favorites:", error);
-      }
-    },
-    [favorites]
-  );
+      },
 
-  const fetchRatings = useCallback(async (userId) => {
-    setLoadingRatings(true);
-    try {
+      fetchRatingForAnime: async (userId, animeId) => {
+        if (!userId || !animeId) {
+          const errorMessage = "Missing userId or animeId for fetching rating";
+          console.error(errorMessage);
+          setState((prevState) => ({ ...prevState, error: errorMessage }));
+          return;
+        }
 
-      console.log("User ID: ", userId);
+        setState((prevState) => ({
+          ...prevState,
+          loading: { ...prevState.loading, ratings: true },
+          error: null,
+        }));
+        try {
+          const response = await api.get(
+            `/ratings_operations.php?userId=${userId}&animeId=${animeId}`
+          );
 
-      const response = await axios.get(
-        `${API_BASE_URL}/ratings_operations.php?userId=${userId}`
-      );
-      const userRatings = response.data.ratings || {}; 
+          if (response.data.error) {
+            console.error("Error fetching rating:", response.data.error);
+            setState((prevState) => ({
+              ...prevState,
+              error: "Error fetching rating",
+            }));
+          } else {
+            setState((prevState) => ({
+              ...prevState,
+              ratings: {
+                ...prevState.ratings,
+                [animeId]: response.data.rating,
+              },
+            }));
+          }
+        } catch (error) {
+          console.error("Error fetching rating:", error);
+          setState((prevState) => ({
+            ...prevState,
+            error: "Error fetching rating",
+          }));
+        } finally {
+          setState((prevState) => ({
+            ...prevState,
+            loading: { ...prevState.loading, ratings: false },
+          }));
+        }
+      },
 
-      const ratingsObject = {};
-      if (Array.isArray(userRatings)) {
-        userRatings.forEach((rating) => {
-          ratingsObject[rating.animeId] = rating.rating;
-        });
-      }
-
-      setRatings(ratingsObject);
-    } catch (error) {
-      console.error("Error fetching ratings:", error);
-      setRatings({});
-    } finally {
-      setLoadingRatings(false);
-    }
-  }, []);
-
-  const updateRating = useCallback(
-    async (userId, animeId, rating) => {
-      try {
-        const response = await axios.post(
-          `${API_BASE_URL}/ratings_operations.php`,
-          {
+      updateRating: async (userId, animeId, rating) => {
+        setState((prevState) => ({ ...prevState, error: null }));
+        try {
+          const response = await api.post(`/ratings_operations.php`, {
             userId,
             animeId,
             rating,
+          });
+
+          if (response.data.success) {
+            setState((prevState) => ({
+              ...prevState,
+              ratings: {
+                ...prevState.ratings,
+                [animeId]: rating,
+              },
+            }));
+            console.log(response.data.message);
+          } else {
+            const errorMessage =
+              response.data.error || "Failed to update rating.";
+            console.error(errorMessage);
+            setState((prevState) => ({ ...prevState, error: errorMessage }));
           }
-        );
-
-        if (response.data.success) {
-          setRatings({ ...ratings, [animeId]: rating });
-          console.log(response.data.message);
-        } else {
-          console.error(response.data.error || "Failed to update rating.");
+        } catch (error) {
+          console.error("Error updating rating:", error);
+          setState((prevState) => ({
+            ...prevState,
+            error: "Error updating rating",
+          }));
         }
-      } catch (error) {
-        console.error("Error updating rating:", error);
-      }
-    },
-    [ratings]
-  );
+      },
 
-  const addOrUpdateReview = useCallback(
-    async (userId, animeId, reviewText) => {
-      try {
-        const response = await axios.post(
-          `${API_BASE_URL}/review_operations.php`,
-          {
+      addOrUpdateReview: async (userId, animeId, reviewText) => {
+        setState((prevState) => ({ ...prevState, error: null }));
+        try {
+          const response = await api.post(`/review_operations.php`, {
             userId,
             animeId,
             reviewText,
-          }
-        );
+          });
 
-        if (response.data.success) {
-          fetchReviews(userId);
-          console.log(response.data.message);
-        } else {
-          console.error(response.data.error || "Failed to add/update review.");
+          if (response.data.success) {
+            apiOperations.fetchReviews(userId);
+            console.log(response.data.message);
+          } else {
+            const errorMessage =
+              response.data.error || "Failed to add/update review.";
+            console.error(errorMessage);
+            setState((prevState) => ({ ...prevState, error: errorMessage }));
+          }
+        } catch (error) {
+          console.error("Error adding/updating review:", error);
+          setState((prevState) => ({
+            ...prevState,
+            error: "Error adding/updating review",
+          }));
         }
-      } catch (error) {
-        console.error("Error adding/updating review:", error);
-      }
-    },
-    [fetchReviews]
+      },
+
+      login: (userData) => {
+        setUser(userData);
+        setToken(userData.token);
+        setState((prevState) => ({ ...prevState, error: null }));
+        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("token", userData.token);
+        console.log("User data and token stored:", userData);
+      },
+
+      logout: () => {
+        setUser(null);
+        setToken(null);
+        setState({
+          favorites: [],
+          reviews: [],
+          ratings: {},
+          loading: {
+            favorites: false,
+            reviews: false,
+            ratings: false,
+          },
+          error: null,
+        });
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+      },
+    }),
+    [api, user]
   );
 
-  function login(userData) {
-    setUser(userData);
-    setToken(userData.token);
-    localStorage.setItem("user", JSON.stringify(userData));
-    if (userData.token) {
-      localStorage.setItem("token", userData.token);
+  useEffect(() => {
+    if (user && token) {
+      apiOperations.fetchFavorites(user.id);
+      apiOperations.fetchReviews(user.id);
+    } else {
+      setState({
+        favorites: [],
+        reviews: [],
+        ratings: {},
+        loading: {
+          favorites: false,
+          reviews: false,
+          ratings: false,
+        },
+        error: null,
+      });
     }
-    console.log("User data and token stored:", userData);
-  }
+  }, [user, token, apiOperations]);
 
-  function logout() {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-  }
-
-  const contextValue = {
-    user,
-    token,
-    favorites,
-    loadingFavorites,
-    login,
-    logout,
-    updateFavorites,
-    reviews,
-    loadingReviews,
-    fetchReviews,
-    ratings,
-    loadingRatings,
-    fetchRatings,
-    updateRating,
-    addOrUpdateReview,
-  };
-
-  console.log("Reviews: ", reviews);
+  const contextValue = useMemo(
+    () => ({
+      user,
+      token,
+      ...state,
+      ...apiOperations,
+    }),
+    [user, token, state, apiOperations]
+  );
 
   return (
     <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
@@ -251,4 +340,4 @@ AuthProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-export const useAuth = () => React.useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext);
