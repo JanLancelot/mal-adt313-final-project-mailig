@@ -1,5 +1,7 @@
 # Jan Lancelot P. Mailig || BSCS-3A
 
+There's only one codebase for both user and admin. Admin routes and API endpoints are protected using access tokens and the user's role.
+
 API Endpoints
 
 | Method | URL                                               | Payload                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Headers                             | Response                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
