@@ -11,13 +11,6 @@
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
 
-  --spacing-xs: 0.5rem;
-  --spacing-sm: 1rem;
-  --spacing-md: 1.5rem;
-  --spacing-lg: 2rem;
-  --spacing-xl: 4rem;
-  --spacing-2xl: 6rem;
-
   --primary-color: #4299e1;
   --secondary-color: #4299e1;
   --success-color: #48bb78;
@@ -30,57 +23,12 @@
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --font-size-base: 1rem;
-  --font-size-sm: 0.875rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-size-4xl: 2.25rem;
-  --font-size-5xl: 3rem;
-  --font-size-6xl: 3.75rem;
-  --font-size-7xl: 4.5rem;
-  --font-size-8xl: 6rem;
-  --font-size-9xl: 8rem;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
   --line-height-base: 1.5;
-
   --accent-color: #e74c3c;
-  --accent-color-hover: #c0392b;
-  --accent-shadow: 0 2px 10px rgba(231, 76, 60, 0.3);
-  --accent-shadow-hover: 0 4px 15px rgba(231, 76, 60, 0.4);
-  --title-color: #2c3e50;
-  --synopsis-color: #444;
-  --review-user-color: #4a5568;
-  --review-date-color: #718096;
-  --textarea-placeholder-color: #a0aec0;
-  --favorite-button-color: #ffc107;
-  --favorite-button-hover-color: #e0a800;
-
-  --review-item-hover-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-  --review-anime-title-color: #3182ce;
-  --review-anime-title-hover-color: #2c5282;
-  --review-item-border-color: #edf2f7;
-  --no-reviews-background: #f7fafc;
-  --no-reviews-border-color: #cbd5e0;
-
-  --auth-background: #f9f9f9;
-  --auth-title-color: var(--text-primary);
-  --auth-form-max-width: 300px;
-  --auth-label-color: var(--text-secondary);
-  --auth-input-background: var(--card-background);
-  --auth-input-border: var(--border-color);
-  --auth-input-focus-border: var(--primary-color);
-  --auth-button-background: var(--primary-color);
-  --auth-button-hover-background: #0056b3;
-  --auth-button-text-color: #fff;
-  --auth-switch-link-color: var(--primary-color);
-  --auth-switch-link-hover-color: #0056b3;
-  --auth-message-color: var(--accent-color);
-
-  --button-border-radius: 8px;
 }
 
 a {
@@ -98,7 +46,7 @@ h1 {
 }
 
 button {
-  border-radius: var(--button-border-radius);
+  border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
   font-size: var(--font-size-base);

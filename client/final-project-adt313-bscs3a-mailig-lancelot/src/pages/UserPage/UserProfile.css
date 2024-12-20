@@ -22,14 +22,14 @@
   padding: 1.5rem;
   box-shadow: var(--shadow-md);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 1px solid var(--review-item-border-color);
+  border: 1px solid #edf2f7;
   display: flex;
   flex-direction: column;
 }
 
 .review-item:hover {
   transform: translateY(-2px);
-  box-shadow: var(--review-item-hover-shadow);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
 .review-anime-title {
@@ -37,29 +37,29 @@
   font-size: 1.25rem;
   margin-bottom: 0.75rem;
   cursor: pointer;
-  color: var(--review-anime-title-color);
+  color: #3182ce;
   transition: color 0.2s ease;
   word-break: break-word;
 }
 
 .review-anime-title:hover {
-  color: var(--review-anime-title-hover-color);
+  color: #2c5282;
   text-decoration: underline;
 }
 
 .review-item p {
-  color: var(--review-user-color);
+  color: #4a5568;
   line-height: var(--line-height-base);
   margin-bottom: 1rem;
   font-size: var(--font-size-base);
 }
 
 .review-date {
-  color: var(--review-date-color);
+  color: #718096;
   font-size: 0.875rem;
   margin-top: auto;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--review-item-border-color);
+  border-top: 1px solid #edf2f7;
 }
 
 @media (max-width: 768px) {
@@ -83,11 +83,11 @@
 
 .reviews-list p:only-child {
   text-align: center;
-  color: var(--review-date-color);
+  color: #718096;
   font-style: italic;
   padding: 2rem;
-  background: var(--no-reviews-background);
+  background: #f7fafc;
   border-radius: 8px;
-  border: 1px dashed var(--no-reviews-border-color);
+  border: 1px dashed #cbd5e0;
   grid-column: 1 / -1;
 }

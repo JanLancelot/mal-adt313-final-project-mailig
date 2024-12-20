@@ -28,11 +28,14 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
     anime.number_of_seasons || ""
   );
   const [status, setStatus] = useState(anime.status || "");
+  const [posterPath, setPosterPath] = useState(anime.posterPath || "");
   const { fetchAnime } = useAnime();
 
   function handleSubmit(e) {
     e.preventDefault();
     const formattedScore = parseFloat(parseFloat(score).toFixed(3)) || 0;
+    const formattedPopularity = parseFloat(popularity) || 0;
+    const formattedGenres = genres.split(",").map((genre) => genre.trim());
 
     onSubmit({
       id: anime.id,
@@ -40,9 +43,9 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
       score: formattedScore,
       synopsis,
       coverPhoto,
-      popularity: parseFloat(popularity) || 0,
+      popularity: formattedPopularity,
       releaseDate,
-      genres: JSON.stringify(genres),
+      genres: JSON.stringify(formattedGenres),
       cast: JSON.stringify(cast),
       crew: JSON.stringify(crew),
       photos: JSON.stringify(photos),
@@ -50,6 +53,7 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
       number_of_episodes: parseInt(numberOfEpisodes, 10) || 0,
       number_of_seasons: parseInt(numberOfSeasons, 10) || 0,
       status,
+      posterPath,
     });
     fetchAnime();
   }
@@ -62,7 +66,7 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
       setCoverPhoto(anime.coverPhoto || "");
       setPopularity(anime.popularity || "");
       setReleaseDate(anime.releaseDate || "");
-      setGenres(anime.genres || []);
+      setGenres(Array.isArray(anime.genres) ? anime.genres.join(", ") : anime.genres || "");
       setCast(anime.cast || []);
       setCrew(anime.crew || []);
       setPhotos(anime.photos || []);
@@ -70,6 +74,7 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
       setNumberOfEpisodes(anime.number_of_episodes || "");
       setNumberOfSeasons(anime.number_of_seasons || "");
       setStatus(anime.status || "");
+      setPosterPath(anime.posterPath || "");
     }
 
     console.log("Infinite rerender test");
@@ -103,6 +108,14 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
     const newCrew = [...crew];
     newCrew[index][field] = value;
     setCrew(newCrew);
+  };
+
+  const handlePosterSelect = (photo) => {
+    setPosterPath(photo);
+  };
+
+  const handlePosterDeselect = () => {
+    setPosterPath("");
   };
 
   return (
@@ -145,9 +158,9 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
                 id="popularity"
                 type="number"
                 value={popularity}
+                onChange={(e) => setPopularity(e.target.value)}
                 required
-                readOnly
-                className="input-field readonly"
+                className="input-field"
               />
             </div>
           </div>
@@ -171,9 +184,9 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
                 id="releaseDate"
                 type="date"
                 value={releaseDate}
-                readOnly
+                onChange={(e) => setReleaseDate(e.target.value)}
                 required
-                className="input-field readonly"
+                className="input-field"
               />
             </div>
             <div className="form-group">
@@ -181,10 +194,10 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
               <input
                 id="genres"
                 type="text"
-                value={genres.join(", ")}
-                readOnly
+                value={genres}
+                onChange={(e) => setGenres(e.target.value)}
                 required
-                className="input-field readonly"
+                className="input-field"
               />
             </div>
           </div>
@@ -310,6 +323,11 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
                   src={photo}
                   alt={`Photo ${index}`}
                   className="photo-preview"
+                  onClick={() => handlePosterSelect(photo)}
+                  style={{
+                    cursor: "pointer",
+                    border: posterPath === photo ? "2px solid blue" : "none",
+                  }}
                 />
                 <div className="photo-controls">
                   <input
@@ -329,6 +347,28 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
                 </div>
               </div>
             ))}
+          </div>
+          <div className="selected-poster-preview">
+            <label>Selected Poster:</label>
+            <div className="poster-preview-container">
+              <img
+                src={
+                  posterPath ||
+                  "https://placehold.co/300x169/ddd/666?text=Select+Poster&font=roboto"
+                }
+                alt="Selected Poster"
+                className="poster-preview-image"
+              />
+              {posterPath && (
+                <button
+                  type="button"
+                  onClick={handlePosterDeselect}
+                  className="deselect-poster-button"
+                >
+                  Deselect
+                </button>
+              )}
+            </div>
           </div>
           <button
             type="button"

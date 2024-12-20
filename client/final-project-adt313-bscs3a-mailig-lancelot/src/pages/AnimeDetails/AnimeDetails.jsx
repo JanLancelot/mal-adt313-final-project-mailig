@@ -196,6 +196,7 @@ export default function AnimeDetails() {
     number_of_episodes,
     number_of_seasons,
     status,
+    posterPath,
   } = localAnimeDetails;
 
   const cast = animeCasts[animeId] || [];
@@ -297,6 +298,15 @@ export default function AnimeDetails() {
         </div>
 
         <div className="right-section">
+          {posterPath && (
+            <div className="poster-container">
+              <img
+                src={posterPath}
+                alt={`${title} Poster`}
+                className="poster-image"
+              />
+            </div>
+          )}
           {synopsis && (
             <>
               <h2>Synopsis</h2>
