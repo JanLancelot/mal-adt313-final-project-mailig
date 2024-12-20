@@ -1,4 +1,21 @@
 <?php
+
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⡤⠤⠤⠤⠤⢀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⡴⠞⠉⠀⠀⠀⠀⠀⠀⠀⠀⢠⣽⡶⢤⡀⠀⠀⠀⠀⠀⠀
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣷⣶⣤⣤⣀⣀⠀⣀⣤⣶⣾⠿⠿⣿⣄⠙⢦⡀⠀⠀⠀⠀
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣠⣿⣿⡿⠋⠉⠉⠛⠛⠿⣿⣿⠛⠉⠀⠀⠀⠈⢿⣦⡀⠱⡄⠀⠀⠀
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡠⠒⠉⠀⠀⠀⠀⠀⠙⠢⣄⠀⠀⠀⠀⢸⣿⡀⠀⠀⠀⠀⠀⠈⠻⣷⣄⣽⡄⢀⣀
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⠎⢀⣤⣄⠀⠀⢀⣠⣀⠀⠀⠈⢦⠀⠀⠀⠀⣿⣇⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⡷⠉⡽
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡆⠀⢺⣿⡿⠀⠀⢸⣿⣿⠀⠀⠀⠈⣇⠀⠀⠀⢹⣿⠀⠀⠀⠀⠀⠀⢀⣴⡿⢃⣧⠞⠀
+// ⢀⡤⠒⠈⠉⠁⠀⠐⠒⠢⠤⠤⠤⠧⣄⣀⢭⣤⡀⠀⣠⡍⠁⠀⠀⠀⠀⢸⡀⠀⠀⠈⣿⣇⠀⢀⣀⣤⣶⡿⠋⢁⠾⡇⠀⠀
+// ⠚⠤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣟⣿⣿⣿⢻⣶⣤⣤⠀⠀⠀⠀⢿⡿⠿⠿⠿⠿⠿⠿⠿⠛⠉⣠⠔⠁⠀⢇⠀⠀
+// ⠀⠀⠀⠀⠉⠑⠒⠲⠤⠤⠄⢀⣀⣀⣠⣏⠉⠛⠿⠿⠟⠛⢷⡿⠀⠀⠀⠀⠀⠙⠲⠤⠤⠤⠤⠴⠖⠚⣉⠀⠀⠀⠀⢸⠀⠀
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠑⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡠⠔⠊⠙⠦⢤⠠⠴⠋⠀⠀
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⠃⠀⠀⠀⠀⡒⠒⠠⠤⠤⠤⢤⠀⠀⠀⠀⠀⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣄⠀⠀⠀⣠⠇⠀⠀⠀⠀⠀⢸⠀⠀⠀⠀⠀⢸⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠀⠀⠀⠀⠀⠀⠀⠈⠦⣀⣀⣀⠤⠊⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+// You have been visited by hungry turtle. Would you please give him a cookie?
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS");
@@ -8,7 +25,7 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 $conn = new mysqli("localhost", "root", "", "final-project-mal-mailig");
 
 if ($conn->connect_error) {
-    http_response_code(500); 
+    http_response_code(500);
     die(json_encode(array("message" => "Connection failed: " . $conn->connect_error)));
 }
 
@@ -86,15 +103,16 @@ switch ($method) {
         $status = $data->status;
         $date_created = $data->date_created;
         $date_updated = $data->date_updated;
+        $posterPath = $data->posterPath;
 
-        $sql = "INSERT INTO anime (title, score, synopsis, coverPhoto, popularity, releaseDate, genres, number_of_episodes, number_of_seasons, status, date_created, date_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO anime (title, score, synopsis, coverPhoto, popularity, releaseDate, genres, number_of_episodes, number_of_seasons, status, date_created, date_updated, posterPath) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
             http_response_code(500);
             echo json_encode(array("message" => "Prepare failed: " . $conn->error));
             exit;
         }
-        $stmt->bind_param("sdsssssiisss", $title, $score, $synopsis, $coverPhoto, $popularity, $releaseDate, $genres, $number_of_episodes, $number_of_seasons, $status, $date_created, $date_updated);
+        $stmt->bind_param("sdsssssiissss", $title, $score, $synopsis, $coverPhoto, $popularity, $releaseDate, $genres, $number_of_episodes, $number_of_seasons, $status, $date_created, $date_updated, $posterPath);
 
         if ($stmt->execute()) {
             http_response_code(201);
@@ -122,7 +140,7 @@ switch ($method) {
         $params = array();
         $types = "";
 
-        $updatableFields = ['title', 'score', 'synopsis', 'coverPhoto', 'popularity', 'releaseDate', 'genres', 'number_of_episodes', 'number_of_seasons', 'status', 'date_updated'];
+        $updatableFields = ['title', 'score', 'synopsis', 'coverPhoto', 'popularity', 'releaseDate', 'genres', 'number_of_episodes', 'number_of_seasons', 'status', 'date_updated', 'posterPath'];
         foreach ($updatableFields as $field) {
             if (isset($data->$field)) {
                 $sql .= "$field = ?, ";

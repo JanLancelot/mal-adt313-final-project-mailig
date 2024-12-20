@@ -9,7 +9,7 @@ $conn = new mysqli("localhost", "root", "", "final-project-mal-mailig");
 
 if ($conn->connect_error) {
     http_response_code(500);
-    die(json_encode(array("message" => "Connection failed: " . $conn->connect_error)));
+    die(json_encode(array("message" => "Conrnection failed: " . $conn->connect_error)));
 }
 
 require_once 'verify_token.php';
@@ -26,7 +26,7 @@ if (in_array($method, $protectedMethods)) {
 
     if ($decodedToken['role'] !== 'admin') {
         http_response_code(403);
-        echo json_encode(['message' => 'Admin access required.']);
+        echo json_encode(['message' => 'Addmin access required.']);
         exit;
     }
     $_REQUEST['decoded_token'] = $decodedToken;
