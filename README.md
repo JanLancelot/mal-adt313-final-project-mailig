@@ -83,3 +83,4 @@ There's only one codebase for both user and admin. Admin routes and API endpoint
 | GET    | `localhost/mal-project/reviews_operations.php?userId=1`       | None                                                        | `Authorization` | Retrieves reviews of a user with a given userId.                      |
 | GET    | `localhost/mal-project/anime_reviews_operations.php?animeId=1`   | None                                                        | `Authorization` | Retrieves all reviews for the given anime ID.                               |
 | POST   | `localhost/mal-project/reviews_operations.php`      | `{ "userId": 1, "animeId": 2, "reviewText": "This is a great anime!" }` | `Authorization` | Adds or updates a review of an anime by the given user.          |
+| DELETE | `localhost/mal-project/reviews_operations.php?reviewId=1`   | None | `Authorization` | Deletes a review by its ID |
