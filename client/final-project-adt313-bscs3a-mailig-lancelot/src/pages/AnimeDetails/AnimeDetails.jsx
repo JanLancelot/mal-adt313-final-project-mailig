@@ -7,6 +7,7 @@ import { FaStar as SolidStar } from "react-icons/fa";
 import { FaRegStar as RegularStar } from "react-icons/fa";
 import { AiFillStar as FilledStar } from "react-icons/ai";
 import { AiOutlineStar as OutlineStar } from "react-icons/ai";
+import { RiDeleteBinLine } from "react-icons/ri";
 
 function getInitials(name) {
   if (!name) return "";
@@ -39,6 +40,8 @@ export default function AnimeDetails() {
     addOrUpdateReview,
     token,
   } = useAuth();
+
+  console.log("User: ", user);
 
   const [animeReviews, setAnimeReviews] = useState([]);
   const [loadingAnimeReviews, setLoadingAnimeReviews] = useState(false);
@@ -105,6 +108,7 @@ export default function AnimeDetails() {
         const data = await response.json();
         if (data && data.reviews) {
           setAnimeReviews(data.reviews);
+          console.log("Anime Reviews: ", data.reviews);
         } else {
           setAnimeReviews([]);
         }
@@ -173,6 +177,41 @@ export default function AnimeDetails() {
     navigate,
     fetchReviewsForAnime,
   ]);
+
+  const handleDeleteReview = useCallback(
+    async (reviewId) => {
+      if (!user || !token) {
+        navigate("/login");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/review_operations.php?reviewId=${reviewId}&userId=${user.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const message = await response.json();
+          throw new Error(
+            message.error || `Failed to delete review: ${response.status}`
+          );
+        }
+
+        fetchReviewsForAnime(animeId);
+      } catch (error) {
+        console.error("Error deleting review:", error);
+      }
+    },
+    [user, token, navigate, animeId, fetchReviewsForAnime]
+  );
+
+  console.log("Anime Reviews: ", animeReviews);
 
   if (loading || loadingFavorites || loadingRatings || loadingAnimeReviews) {
     return <div className="loading">Loading...</div>;
@@ -425,12 +464,23 @@ export default function AnimeDetails() {
               <div className="all-reviews">
                 {animeReviews.map((review) => (
                   <div key={review.id} className="user-review">
-                    <h3>{review.username}</h3>
-                    <p>{review.reviewText}</p>
-                    {review.reviewDate && (
-                      <p className="review-date">
-                        {new Date(review.reviewDate).toLocaleDateString()}
-                      </p>
+                    <div className="review-content">
+                      <h3>{review.username}</h3>
+                      <p>{review.reviewText}</p>
+                      {review.reviewDate && (
+                        <p className="review-date">
+                          {new Date(review.reviewDate).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                    {user && user.username === review.username && (
+                      <button
+                        className="delete-review-button"
+                        onClick={() => handleDeleteReview(review.id)}
+                        aria-label="Delete Review"
+                      >
+                        <RiDeleteBinLine />
+                      </button>
                     )}
                   </div>
                 ))}

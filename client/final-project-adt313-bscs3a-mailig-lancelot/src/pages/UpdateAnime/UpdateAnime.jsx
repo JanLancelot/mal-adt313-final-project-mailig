@@ -16,7 +16,7 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
   const [popularity, setPopularity] = useState(anime.popularity || "");
   const [releaseDate, setReleaseDate] = useState(anime.releaseDate || "");
   const [genres, setGenres] = useState(
-    anime.genres ? JSON.parse(anime.genres) : []
+    Array.isArray(anime.genres) ? anime.genres.join(", ") : anime.genres || ""
   );
 
   const [numberOfEpisodes, setNumberOfEpisodes] = useState(
@@ -61,7 +61,8 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
     e.preventDefault();
     const formattedScore = parseFloat(parseFloat(score).toFixed(3)) || 0;
     const formattedPopularity = parseFloat(popularity) || 0;
-    const formattedGenres = genres.join(", ");
+    const formattedGenres = genres.split(",").map((genre) => genre.trim());
+
     const animeData = {
       title,
       score: formattedScore,
@@ -69,7 +70,7 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
       coverPhoto,
       popularity: formattedPopularity,
       releaseDate,
-      genres: JSON.stringify(formattedGenres),
+      genres: formattedGenres,
       number_of_episodes: parseInt(numberOfEpisodes, 10) || 0,
       number_of_seasons: parseInt(numberOfSeasons, 10) || 0,
       status,
@@ -77,6 +78,8 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
       id: anime.id,
       posterPath,
     };
+
+    console.log("Anime Data from Update:", animeData);
 
     try {
       await api.put("anime_operations.php", animeData);
@@ -144,13 +147,22 @@ function AnimeForm({ anime, cast, crew, photos, videos, onSubmit, onCancel }) {
       setCoverPhoto(anime.coverPhoto || "");
       setPopularity(anime.popularity || "");
       setReleaseDate(anime.releaseDate || "");
-      setGenres(
-        anime.genres
-          ? Array.isArray(anime.genres)
-            ? anime.genres.join(", ")
-            : JSON.parse(anime.genres).join(", ")
-          : []
-      );
+
+      if (Array.isArray(anime.genres)) {
+        setGenres(anime.genres.join(", "));
+      } else if (typeof anime.genres === "string") {
+        try {
+          const parsedGenres = JSON.parse(anime.genres);
+          setGenres(parsedGenres.join(", "));
+        } catch (e) {
+          console.log("Error parsing genres:", e);
+          const str = anime.genres.replace(/\[|\]/g, "");
+          setGenres(str.replace(/"/g, ""));
+        }
+      } else {
+        setGenres("");
+      }
+
       setNumberOfEpisodes(anime.number_of_episodes || "");
       setNumberOfSeasons(anime.number_of_seasons || "");
       setStatus(anime.status || "");
@@ -696,7 +708,6 @@ export default function UpdateAnime() {
       setError("Failed to update anime. Please try again later.");
     }
   };
-
   return (
     <div className="update-anime-container">
       <h1>Update Anime</h1>

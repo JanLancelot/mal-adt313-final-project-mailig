@@ -130,6 +130,12 @@ export function AnimeProvider({ children }) {
             newAnime
           );
 
+          console.log("New Anime: ", newAnime);
+
+          console.log("Anime Data: ", animeData);
+          
+          
+
           if (!animeData || !animeData.id) {
             throw new Error("Failed to add anime or retrieve ID");
           }

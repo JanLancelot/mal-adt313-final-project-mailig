@@ -45,7 +45,7 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
       coverPhoto,
       popularity: formattedPopularity,
       releaseDate,
-      genres: JSON.stringify(formattedGenres),
+      genres: formattedGenres,
       cast: JSON.stringify(cast),
       crew: JSON.stringify(crew),
       photos: JSON.stringify(photos),
@@ -66,7 +66,7 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
       setCoverPhoto(anime.coverPhoto || "");
       setPopularity(anime.popularity || "");
       setReleaseDate(anime.releaseDate || "");
-      setGenres(Array.isArray(anime.genres) ? anime.genres.join(", ") : anime.genres || "");
+     setGenres(Array.isArray(anime.genres) ? anime.genres.join(", ") : anime.genres || "");
       setCast(anime.cast || []);
       setCrew(anime.crew || []);
       setPhotos(anime.photos || []);
@@ -76,8 +76,6 @@ function AnimeForm({ anime, onSubmit, onCancel }) {
       setStatus(anime.status || "");
       setPosterPath(anime.posterPath || "");
     }
-
-    console.log("Infinite rerender test");
   }, [anime]);
 
   const handleRemoveItem = (array, setArray, index) => {
@@ -557,13 +555,6 @@ export default function AddAnime() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedAnime, setSelectedAnime] = useState({});
-  // const [extraDetails, setExtraDetails] = useState({
-  //   cast: [],
-  //   crew: [],
-  //   photos: [],
-  //   videos: [],
-  // });
-
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
@@ -619,52 +610,45 @@ export default function AddAnime() {
   };
 
   async function fetchAdditionalDetails(animeId) {
-    try {
-      const [imagesResponse, videosResponse, detailsResponse, castAndCrew] =
-        await Promise.all([
-          axios.get(`${TMDB_BASE_URL}/tv/${animeId}/images`, {
-            params: { api_key: TMDB_API_KEY },
-          }),
-          axios.get(`${TMDB_BASE_URL}/tv/${animeId}/videos`, {
-            params: { api_key: TMDB_API_KEY },
-          }),
-          axios.get(`${TMDB_BASE_URL}/tv/${animeId}`, {
-            params: { api_key: TMDB_API_KEY },
-          }),
-          fetchAllCastAndCrew(animeId),
-        ]);
+      try {
+          const [imagesResponse, videosResponse, detailsResponse, castAndCrew] =
+            await Promise.all([
+              axios.get(`${TMDB_BASE_URL}/tv/${animeId}/images`, {
+                params: { api_key: TMDB_API_KEY },
+              }),
+              axios.get(`${TMDB_BASE_URL}/tv/${animeId}/videos`, {
+                params: { api_key: TMDB_API_KEY },
+              }),
+              axios.get(`${TMDB_BASE_URL}/tv/${animeId}`, {
+                params: { api_key: TMDB_API_KEY },
+              }),
+                fetchAllCastAndCrew(animeId),
+            ]);
 
-      const genres = detailsResponse.data.genres.map((genre) => genre.name);
-
-      // setExtraDetails({
-      //   cast: castAndCrew.cast,
-      //   crew: castAndCrew.crew,
-      //   photos: imagesResponse.data.backdrops.slice(0, 10),
-      //   videos: videosResponse.data.results.slice(0, 5),
-      // });
-
-      setSelectedAnime((prev) => ({
-        ...prev,
-        genres,
-        tmdb_id: animeId,
-        cast: castAndCrew.cast || [],
-        crew: castAndCrew.crew || [],
-        photos:
-          imagesResponse.data.backdrops
-            .map(
-              (photo) => `https://image.tmdb.org/t/p/original${photo.file_path}`
-            )
-            .slice(0, 10) || [],
-        videos:
-          videosResponse.data.results.map((video) => video).slice(0, 5) || [],
-        number_of_episodes: detailsResponse.data.number_of_episodes,
-        number_of_seasons: detailsResponse.data.number_of_seasons,
-        status: detailsResponse.data.status,
-      }));
-    } catch (err) {
-      console.error("Failed to fetch additional details:", err);
+          const genres = detailsResponse.data.genres.map((genre) => genre.name);
+  
+            setSelectedAnime((prev) => ({
+                ...prev,
+                genres,
+                tmdb_id: animeId,
+                cast: castAndCrew.cast || [],
+                crew: castAndCrew.crew || [],
+                photos:
+                    imagesResponse.data.backdrops
+                    .map(
+                        (photo) => `https://image.tmdb.org/t/p/original${photo.file_path}`
+                    )
+                    .slice(0, 10) || [],
+                videos:
+                    videosResponse.data.results.map((video) => video).slice(0, 5) || [],
+                number_of_episodes: detailsResponse.data.number_of_episodes,
+                number_of_seasons: detailsResponse.data.number_of_seasons,
+                status: detailsResponse.data.status,
+              }));
+        } catch (err) {
+          console.error("Failed to fetch additional details:", err);
+        }
     }
-  }
 
   async function handleSelectAnime(tmdbAnime) {
     const animeData = {
