@@ -1,5 +1,4 @@
 <?php
-
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⡤⠤⠤⠤⠤⢀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⡴⠞⠉⠀⠀⠀⠀⠀⠀⠀⠀⢠⣽⡶⢤⡀⠀⠀⠀⠀⠀⠀
 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣷⣶⣤⣤⣀⣀⠀⣀⣤⣶⣾⠿⠿⣿⣄⠙⢦⡀⠀⠀⠀⠀
@@ -92,7 +91,7 @@ switch ($method) {
         }
 
         $title = $data->title;
-        $genres = $data->genres;
+        $genres = isset($data->genres) ? json_encode($data->genres) : null;
         $score = $data->score;
         $synopsis = $data->synopsis;
         $coverPhoto = $data->coverPhoto;
@@ -104,7 +103,7 @@ switch ($method) {
         $date_created = $data->date_created;
         $date_updated = $data->date_updated;
         $posterPath = $data->posterPath;
-
+        
         $sql = "INSERT INTO anime (title, score, synopsis, coverPhoto, popularity, releaseDate, genres, number_of_episodes, number_of_seasons, status, date_created, date_updated, posterPath) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
@@ -112,7 +111,8 @@ switch ($method) {
             echo json_encode(array("message" => "Prepare failed: " . $conn->error));
             exit;
         }
-        $stmt->bind_param("sdsssssiissss", $title, $score, $synopsis, $coverPhoto, $popularity, $releaseDate, $genres, $number_of_episodes, $number_of_seasons, $status, $date_created, $date_updated, $posterPath);
+
+        $stmt->bind_param("sdsssssisssss", $title, $score, $synopsis, $coverPhoto, $popularity, $releaseDate, $genres, $number_of_episodes, $number_of_seasons, $status, $date_created, $date_updated, $posterPath);
 
         if ($stmt->execute()) {
             http_response_code(201);
@@ -123,7 +123,7 @@ switch ($method) {
         }
         break;
 
-    case 'PUT':
+     case 'PUT':
         $data = json_decode(file_get_contents("php://input"));
         if (json_last_error() !== JSON_ERROR_NONE) {
             http_response_code(400);
@@ -140,14 +140,21 @@ switch ($method) {
         $params = array();
         $types = "";
 
-        $updatableFields = ['title', 'score', 'synopsis', 'coverPhoto', 'popularity', 'releaseDate', 'genres', 'number_of_episodes', 'number_of_seasons', 'status', 'date_updated', 'posterPath'];
+        $updatableFields = ['title', 'score', 'synopsis', 'coverPhoto', 'popularity', 'releaseDate', 'number_of_episodes', 'number_of_seasons', 'status', 'date_updated', 'posterPath'];
+       
         foreach ($updatableFields as $field) {
             if (isset($data->$field)) {
                 $sql .= "$field = ?, ";
-                $params[] = $data->$field;
+                 $params[] = $data->$field;
                 $types .= ($field === 'score' || $field === 'popularity' || $field === 'number_of_episodes' || $field === 'number_of_seasons') ? "d" : "s";
             }
-        }
+         }
+
+        if (isset($data->genres)) {
+           $sql .= "genres = ?, ";
+           $params[] = json_encode($data->genres);
+           $types .= "s";
+       }
 
         $sql = rtrim($sql, ", ");
 
@@ -157,7 +164,7 @@ switch ($method) {
 
         $stmt = $conn->prepare($sql);
 
-        if (!$stmt) {
+         if (!$stmt) {
             http_response_code(500);
             echo json_encode(array("message" => "Prepare failed: " . $conn->error));
             exit;

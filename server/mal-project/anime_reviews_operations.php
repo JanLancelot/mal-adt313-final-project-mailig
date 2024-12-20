@@ -31,7 +31,7 @@ switch ($method) {
         if (isset($_GET['animeId'])) {
             $animeId = $_GET['animeId'];
 
-            $sql = "SELECT ur.reviewText, u.username, ur.reviewDate
+            $sql = "SELECT ur.id, ur.reviewText, u.username, ur.reviewDate
                     FROM user_reviews ur
                     JOIN users u ON ur.userId = u.id
                     WHERE ur.animeId = ?";
@@ -65,7 +65,7 @@ switch ($method) {
             echo json_encode(array("error" => "Missing animeId"));
         }
         break;
-    
+
     case 'OPTIONS':
         http_response_code(200);
         exit;

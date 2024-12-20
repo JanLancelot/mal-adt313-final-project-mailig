@@ -1,7 +1,7 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS"); 
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
@@ -16,7 +16,7 @@ require_once 'verify_token.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-if ($method === 'POST') {
+if ($method === 'POST' || $method === 'DELETE') {
     $decodedToken = verify_token();
 
     if (!$decodedToken) {
@@ -33,7 +33,7 @@ switch ($method) {
         if (isset($_GET['userId'])) {
             $userId = $_GET['userId'];
 
-            $sql = "SELECT ur.reviewText, u.username, ur.reviewDate, ur.animeId
+            $sql = "SELECT ur.id AS reviewId, ur.reviewText, u.username, ur.reviewDate, ur.animeId
                     FROM user_reviews ur
                     JOIN users u ON ur.userId = u.id
                     WHERE ur.userId = ?
@@ -140,6 +140,33 @@ switch ($method) {
         } else {
             http_response_code(400);
             echo json_encode(array("error" => "Missing userId, animeId, or reviewText"));
+        }
+        break;
+
+    case 'DELETE':
+        if (isset($_GET['reviewId'])) {
+            $reviewId = $_GET['reviewId'];
+
+            $sql = "DELETE FROM user_reviews WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                http_response_code(500);
+                echo json_encode(array("error" => "Failed to prepare SQL statement"));
+                exit;
+            }
+
+            $stmt->bind_param("i", $reviewId);
+
+            if ($stmt->execute()) {
+                http_response_code(200);
+                echo json_encode(array("message" => "Review deleted successfully"));
+            } else {
+                http_response_code(500);
+                echo json_encode(array("error" => "Failed to delete review"));
+            }
+        } else {
+            http_response_code(400);
+            echo json_encode(array("error" => "Missing reviewId"));
         }
         break;
 
