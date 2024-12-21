@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Authentication.css";
@@ -14,12 +14,46 @@ export default function Authentication() {
   const [contactNo, setContactNo] = useState("");
   const [role, setRole] = useState("user");
   const [message, setMessage] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [contactNoError, setContactNoError] = useState("");
 
   const navigate = useNavigate();
   const { login } = useAuth();
 
+    const usernameRef = useRef(null);
+    const contactNoRef = useRef(null);
+
+    const validateForm = () => {
+        let isValid = true;
+        setUsernameError("");
+        setContactNoError("");
+
+         if (!isLogin) {
+            if (/^\d+$/.test(username)) {
+                setUsernameError("Uername cannot be only numbers");
+                if(usernameRef.current){
+                   usernameRef.current.focus();
+                }
+                 isValid = false;
+            } else if (contactNo.length !== 11) {
+                setContactNoError("Contact number must be 11 digits.");
+                if(contactNoRef.current){
+                 contactNoRef.current.focus();
+               }
+                isValid = false;
+
+            }
+        }
+
+        return isValid;
+    };
+
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!validateForm()) {
+      return;
+    }
+
     const url = isLogin
       ? "http://localhost/mal-project/login.php"
       : "http://localhost/mal-project/register.php";
@@ -40,7 +74,6 @@ export default function Authentication() {
       setMessage(response.data.message);
 
       console.log("Data: ", response.data);
-      console.log("Ahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
 
       if (isLogin && response.data.message === "Login successful") {
         login({
@@ -92,7 +125,9 @@ export default function Authentication() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+            ref={usernameRef}
           />
+          {usernameError && <p className="error-message">{usernameError}</p>}
         </div>
         <div className="form-group">
           <label htmlFor="password">Password:</label>
@@ -136,11 +171,13 @@ export default function Authentication() {
             <div className="form-group">
               <label htmlFor="contactNo">Contact Number:</label>
               <input
-                type="text"
+                type="number"
                 id="contactNo"
                 value={contactNo}
                 onChange={(e) => setContactNo(e.target.value)}
+                  ref={contactNoRef}
               />
+              {contactNoError && <p className="error-message">{contactNoError}</p>}
             </div>
             <div className="form-group">
               <label htmlFor="role">Role:</label>

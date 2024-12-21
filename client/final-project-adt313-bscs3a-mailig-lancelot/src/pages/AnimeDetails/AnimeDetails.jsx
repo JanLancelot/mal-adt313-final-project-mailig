@@ -1,4 +1,10 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  useEffect,
+  useMemo,
+  useCallback,
+  useReducer,
+  useRef,
+} from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./AnimeDetails.css";
 import { useAnime } from "../../AnimeContext";
@@ -20,11 +26,42 @@ function getInitials(name) {
 
 const API_BASE_URL = "http://localhost/mal-project";
 
+const initialState = {
+  localAnimeDetails: null,
+  loading: true,
+  error: null,
+  animeReviews: [],
+  loadingAnimeReviews: false,
+  hoverRating: 0,
+  reviewText: "",
+};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case "SET_ANIME_DETAILS":
+      return { ...state, localAnimeDetails: action.payload, loading: false };
+    case "SET_LOADING":
+      return { ...state, loading: action.payload };
+    case "SET_ERROR":
+      return { ...state, error: action.payload, loading: false };
+    case "SET_REVIEWS":
+      return { ...state, animeReviews: action.payload, loadingAnimeReviews: false };
+    case "SET_LOADING_REVIEWS":
+      return { ...state, loadingAnimeReviews: action.payload };
+    case "SET_HOVER_RATING":
+      return { ...state, hoverRating: action.payload };
+    case "SET_REVIEW_TEXT":
+      return { ...state, reviewText: action.payload };
+    default:
+      return state;
+  }
+}
+
+
 export default function AnimeDetails() {
   const { animeId } = useParams();
-  const [localAnimeDetails, setLocalAnimeDetails] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { localAnimeDetails, loading, error, animeReviews, loadingAnimeReviews, hoverRating, reviewText } = state;
   const navigate = useNavigate();
   const { animeList, animeCasts, animeCrews, animePhotos, animeVideos } =
     useAnime();
@@ -41,10 +78,8 @@ export default function AnimeDetails() {
     token,
   } = useAuth();
 
-  console.log("User: ", user);
+  const reviewTextAreaRef = useRef(null);
 
-  const [animeReviews, setAnimeReviews] = useState([]);
-  const [loadingAnimeReviews, setLoadingAnimeReviews] = useState(false);
 
   const isFavorite = useMemo(
     () => favorites && favorites.includes(parseInt(animeId)),
@@ -54,9 +89,6 @@ export default function AnimeDetails() {
   const userRating = useMemo(() => {
     return ratings[animeId];
   }, [ratings, animeId]);
-
-  const [hoverRating, setHoverRating] = useState(0);
-  const [reviewText, setReviewText] = useState("");
 
   const genres = useMemo(() => {
     try {
@@ -69,30 +101,35 @@ export default function AnimeDetails() {
     }
   }, [localAnimeDetails]);
 
+    useEffect(() => {
+    if (user && reviewTextAreaRef.current) {
+      reviewTextAreaRef.current.focus();
+    }
+  }, [user]);
+
+
   useEffect(() => {
     const fetchAnimeDetails = async () => {
-      setLoading(true);
-      setError(null);
+      dispatch({ type: "SET_LOADING", payload: true });
+      dispatch({ type: "SET_ERROR", payload: null });
 
       const foundAnime = animeList.find(
         (anime) => anime.id === parseInt(animeId)
       );
 
       if (foundAnime) {
-        setLocalAnimeDetails(foundAnime);
+        dispatch({ type: "SET_ANIME_DETAILS", payload: foundAnime });
       } else {
-        setError("Anime not found in the list.");
+        dispatch({ type: "SET_ERROR", payload: "Anime not found in the list." });
       }
-
-      setLoading(false);
     };
 
     fetchAnimeDetails();
   }, [animeId, animeList]);
 
-  const fetchReviewsForAnime = useCallback(
+    const fetchReviewsForAnime = useCallback(
     async (animeId) => {
-      setLoadingAnimeReviews(true);
+       dispatch({ type: "SET_LOADING_REVIEWS", payload: true });
       try {
         const response = await fetch(
           `${API_BASE_URL}/anime_reviews_operations.php?animeId=${animeId}`,
@@ -107,16 +144,15 @@ export default function AnimeDetails() {
         }
         const data = await response.json();
         if (data && data.reviews) {
-          setAnimeReviews(data.reviews);
-          console.log("Anime Reviews: ", data.reviews);
+           dispatch({ type: "SET_REVIEWS", payload: data.reviews });
         } else {
-          setAnimeReviews([]);
+           dispatch({ type: "SET_REVIEWS", payload: [] });
         }
       } catch (error) {
         console.error("Error fetching reviews for anime:", error);
-        setAnimeReviews([]);
+         dispatch({ type: "SET_REVIEWS", payload: [] });
       } finally {
-        setLoadingAnimeReviews(false);
+         dispatch({ type: "SET_LOADING_REVIEWS", payload: false });
       }
     },
     [token]
@@ -141,9 +177,9 @@ export default function AnimeDetails() {
     );
   }, [user, animeId, isFavorite, updateFavorites, navigate]);
 
-  const handleRatingHover = (rating) => {
-    setHoverRating(rating);
-  };
+    const handleRatingHover = (rating) => {
+     dispatch({ type: "SET_HOVER_RATING", payload: rating });
+    };
 
   const handleRatingClick = useCallback(
     async (rating) => {
@@ -157,7 +193,7 @@ export default function AnimeDetails() {
   );
 
   const handleReviewChange = (event) => {
-    setReviewText(event.target.value);
+    dispatch({ type: "SET_REVIEW_TEXT", payload: event.target.value });
   };
 
   const handleSubmitReview = useCallback(async () => {
@@ -167,7 +203,7 @@ export default function AnimeDetails() {
     }
 
     await addOrUpdateReview(user.id, animeId, reviewText);
-    setReviewText("");
+    dispatch({ type: "SET_REVIEW_TEXT", payload: "" });
     fetchReviewsForAnime(animeId);
   }, [
     user,
@@ -178,7 +214,7 @@ export default function AnimeDetails() {
     fetchReviewsForAnime,
   ]);
 
-  const handleDeleteReview = useCallback(
+    const handleDeleteReview = useCallback(
     async (reviewId) => {
       if (!user || !token) {
         navigate("/login");
@@ -211,7 +247,6 @@ export default function AnimeDetails() {
     [user, token, navigate, animeId, fetchReviewsForAnime]
   );
 
-  console.log("Anime Reviews: ", animeReviews);
 
   if (loading || loadingFavorites || loadingRatings || loadingAnimeReviews) {
     return <div className="loading">Loading...</div>;
@@ -281,7 +316,7 @@ export default function AnimeDetails() {
                   className="star"
                   onClick={() => handleRatingClick(ratingValue)}
                   onMouseEnter={() => handleRatingHover(ratingValue)}
-                  onMouseLeave={() => setHoverRating(0)}
+                  onMouseLeave={() =>  dispatch({ type: "SET_HOVER_RATING", payload: 0 })}
                 >
                   {ratingValue <= (hoverRating || userRating) ? (
                     <FilledStar color="#ffc107" />
@@ -430,7 +465,7 @@ export default function AnimeDetails() {
                   <div className="crew-list">
                     {crew.map((person) => (
                       <div key={person.id} className="crew-member">
-                        <div className="cast-image-container">
+                       <div className="cast-image-container">
                           {person.profile_path ? (
                             <img
                               src={
@@ -486,6 +521,7 @@ export default function AnimeDetails() {
                 ))}
               </div>
               <textarea
+                 ref={reviewTextAreaRef}
                 value={reviewText}
                 onChange={handleReviewChange}
                 placeholder="Write your review here..."
