@@ -1,0 +1,116 @@
+.navbar {
+  background-color: #1a1a1a;
+  color: #fff;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  box-sizing: border-box;
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 100%;
+  padding: 0 10px;
+  flex-wrap: wrap;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-decoration: none;
+  color: #fff;
+  flex-shrink: 0;
+  margin-right: 10px;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.navbar-link,
+.navbar-username {
+  text-decoration: none;
+  color: #fff;
+  font-size: 1rem;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.user-profile-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  gap: 8px;
+}
+
+.user-profile-link:hover .navbar-username {
+  color: #4a90e2;
+}
+
+.user-profile-link:hover .profile-icon {
+  background-color: #357abd;
+}
+
+.profile-icon {
+  background-color: #4a90e2;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.logout-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  white-space: nowrap;
+  margin-left: 10px;
+}
+
+.logout-button:hover {
+  background-color: #c0392b;
+}
+
+@media screen and (max-width: 768px) {
+  .navbar-container {
+    padding: 0 5px;
+  }
+
+  .navbar-brand {
+    font-size: 1.2rem;
+  }
+
+  .navbar-username {
+    font-size: 0.9rem;
+  }
+
+  .logout-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .profile-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+}
