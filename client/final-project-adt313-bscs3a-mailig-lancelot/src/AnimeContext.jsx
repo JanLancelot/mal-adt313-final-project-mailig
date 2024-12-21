@@ -182,6 +182,8 @@ export function AnimeProvider({ children }) {
           }));
         }
       },
+
+      // Legacy code
       updateAnime: async (updatedAnime) => {
         setState((prevState) => ({ ...prevState, loading: true, error: null }));
         try {
@@ -255,6 +257,7 @@ export function AnimeProvider({ children }) {
           }));
         }
       },
+      
       deleteAnime: async (id) => {
         setState((prevState) => ({ ...prevState, loading: true, error: null }));
         try {
